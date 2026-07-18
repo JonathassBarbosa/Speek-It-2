@@ -1,0 +1,6 @@
+{
+  "name": "Teleprompter Inteligente",
+  "description": "Sistema de teleprompter inteligente para treino de fala com análise de dicção, ritmo, entonação e pausas usando IA.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
