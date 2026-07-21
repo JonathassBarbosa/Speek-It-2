@@ -18,8 +18,8 @@ Sistema de teleprompter com análise de oratória em tempo real. Grave sua leitu
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/SEU_USUARIO/speek-it.git
-cd speek-it
+git clone https://github.com/JonathassBarbosa/Speek-It-2.git
+cd Speek-It-2
 
 # 2. Instale as dependências
 npm install
