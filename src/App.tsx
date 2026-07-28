@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useRef, useState, MouseEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
 import { TextTemplate } from './types';
 import { getAudio } from './lib/db';
 import { useAuth } from './contexts/AuthContext';
@@ -22,8 +22,18 @@ import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
 import AdminDashboard from './components/AdminDashboard';
 import { VocalCoachChat } from './components/VocalCoachChat';
+import AppIntro from './components/brand/AppIntro';
 
 export default function App() {
+  const [showBrandIntro, setShowBrandIntro] = useState(
+    () => sessionStorage.getItem('speek-it-intro-seen') !== 'true',
+  );
+
+  const completeBrandIntro = useCallback(() => {
+    sessionStorage.setItem('speek-it-intro-seen', 'true');
+    setShowBrandIntro(false);
+  }, []);
+
   // Auth
   const { user, token, isLoading: authLoading, logout } = useAuth();
   const [showAdmin, setShowAdmin] = useState(false);
@@ -135,6 +145,10 @@ export default function App() {
     setActiveTab('history');
     library.setSelectedHistoryEval(library.evaluations[0] || null);
   };
+
+  if (showBrandIntro) {
+    return <AppIntro onComplete={completeBrandIntro} />;
+  }
 
   // Auth loading splash
   if (authLoading) {
