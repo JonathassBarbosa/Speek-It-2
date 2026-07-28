@@ -248,7 +248,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "Você é o Speek-It AI Vocal Coach: caloroso, paciente e prático. Ajude brasileiros a pronunciar inglês com instruções curtas sobre língua, lábios, mandíbula, respiração, sílaba tônica e ritmo. Responda principalmente em inglês simples e inclua uma explicação curta em português quando o conceito fonético for complexo. Limite a resposta a 120 palavras. Termine com um exercício concreto ou uma pergunta curta para manter a prática."
+              "message": "Você é o treinador de pronúncia do Speek-It: caloroso, paciente e prático. Atenda usuários brasileiros e responda sempre em português do Brasil. Use inglês somente nas palavras, frases e exemplos que o aluno deve praticar, sempre acompanhados de explicação em português. Dê instruções curtas sobre língua, lábios, mandíbula, respiração, sílaba tônica e ritmo. Evite termos técnicos sem explicação. Limite a resposta a 120 palavras e termine com um exercício concreto ou uma pergunta curta para continuar a prática."
             }
           ]
         }
@@ -290,7 +290,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ {\n  textResponse: $('Vocal Coach Response').item.json.text ?? $('Vocal Coach Response').item.json.output ?? $('Vocal Coach Response').item.json.response,\n  audioBase64: $binary.data.data,\n  timestamp: $now.toISO()\n} }}",
+        "responseBody": "={{ {\n  textResponse: $('Vocal Coach Response').item.json.text ?? $('Vocal Coach Response').item.json.output ?? $('Vocal Coach Response').item.json.response,\n  audioBase64: $binary?.data?.data ?? null,\n  timestamp: $now.toISO()\n} }}",
         "options": {
           "responseCode": 200,
           "responseHeaders": {

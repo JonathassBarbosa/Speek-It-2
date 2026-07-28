@@ -94,7 +94,21 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
         throw new Error(`A API respondeu com o status ${response.status}.`);
       }
 
-      const data = await response.json() as { audioBase64?: string; textResponse?: string };
+      const responseText = await response.text();
+      if (!responseText.trim()) {
+        throw new Error('O Coach não enviou uma resposta. Tente novamente em alguns instantes.');
+      }
+
+      let data: { audioBase64?: string; textResponse?: string; error?: string };
+      try {
+        data = JSON.parse(responseText) as typeof data;
+      } catch {
+        throw new Error('O Coach enviou uma resposta inválida. Tente novamente em alguns instantes.');
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
 
       let coachAudioUrl: string | undefined;
       if (data.audioBase64) {
@@ -104,7 +118,7 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
       const coachMsg: ChatMessage = {
         id: Date.now().toString(),
         sender: 'coach',
-        text: data.textResponse || 'Desculpe, não consegui processar a resposta.',
+        text: data.textResponse || 'Desculpe, não consegui preparar a resposta. Vamos tentar novamente?',
         audioUrl: coachAudioUrl,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
@@ -118,7 +132,11 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
       }
     } catch (error) {
       console.error('Erro na comunicação com o Coach:', error);
-      setError('Não foi possível falar com o Coach agora. Verifique a conexão e tente novamente.');
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível falar com o Coach agora. Verifique a conexão e tente novamente.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -160,7 +178,7 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
         const userMsg: ChatMessage = {
           id: Date.now().toString(),
           sender: 'user',
-          text: '🎤 [Mensagem de Voz Gravada]',
+          text: '🎤 Mensagem de voz gravada',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, userMsg]);

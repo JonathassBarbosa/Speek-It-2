@@ -243,7 +243,7 @@ export default function App() {
           <div className="flex-1 p-4 md:p-8 overflow-y-auto max-h-[calc(100vh-5rem)]">
             <VocalCoachChat
               sessionId={`user-${user.id}`}
-              initialMessage="Olá! Sou seu Vocal Coach. Envie uma frase em inglês por texto ou áudio e vamos trabalhar sua pronúncia juntos."
+              initialMessage="Olá! Sou seu treinador de pronúncia. Envie uma frase em inglês por texto ou áudio. Vou orientar você em português do Brasil, passo a passo."
             />
           </div>
         )}
