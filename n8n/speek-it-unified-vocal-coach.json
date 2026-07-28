@@ -94,15 +94,39 @@
     },
     {
       "parameters": {
-        "resource": "audio",
-        "operation": "transcribe",
-        "binaryPropertyName": "audio",
-        "options": {
-          "language": "en"
+        "method": "POST",
+        "url": "http://speek-it-whisper:9000/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer speek-it-local-whisper"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "audio"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            }
+          ]
         }
       },
-      "type": "@n8n/n8n-nodes-langchain.openAi",
-      "typeVersion": 1.8,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [40, -100],
       "id": "transcribe-evaluation",
       "name": "OpenAI - Transcribe Evaluation"

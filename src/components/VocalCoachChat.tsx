@@ -47,14 +47,21 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const speechRecognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const stopMediaStream = () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  useEffect(() => () => speechRecognitionRef.current?.abort(), []);
+  useEffect(() => () => stopMediaStream(), []);
 
   // Enviar mensagem para a API unificada do n8n
   const sendToN8n = async (payload: { text?: string; audioBlob?: Blob }) => {
@@ -74,7 +81,8 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
       formData.append('text', payload.text);
     }
     if (payload.audioBlob) {
-      formData.append('audio', payload.audioBlob, 'recording.webm');
+      const extension = payload.audioBlob.type.includes('mp4') ? 'm4a' : 'webm';
+      formData.append('audio', payload.audioBlob, `gravacao.${extension}`);
     }
 
     try {
@@ -160,39 +168,33 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
 
   const startRecording = async () => {
     try {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        setError('O reconhecimento de voz não está disponível neste navegador. Use o campo de texto.');
-        return;
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
 
-      const recognition = new SpeechRecognition();
-      speechRecognitionRef.current = recognition;
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
 
-      recognition.onresult = (event: any) => {
-        const transcript = event.results?.[0]?.[0]?.transcript?.trim();
-        if (!transcript) return;
+      mediaRecorderRef.current.onstop = () => {
+        stopMediaStream();
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: mediaRecorderRef.current?.mimeType || 'audio/webm',
+        });
         const userMsg: ChatMessage = {
           id: Date.now().toString(),
           sender: 'user',
-          text: `🎤 ${transcript}`,
+          text: '🎤 Áudio enviado para análise',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, userMsg]);
-        sendToN8n({ text: transcript });
+        sendToN8n({ audioBlob });
       };
 
-      recognition.onerror = () => {
-        setError('Não consegui reconhecer sua fala. Tente novamente ou use o campo de texto.');
-        setIsRecording(false);
-      };
-      recognition.onend = () => setIsRecording(false);
-
-      recognition.start();
+      mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (err) {
       console.error('Erro ao acessar microfone:', err);
@@ -202,8 +204,8 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   };
 
   const stopRecording = () => {
-    if (speechRecognitionRef.current && isRecording) {
-      speechRecognitionRef.current.stop();
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
   };
