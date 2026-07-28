@@ -8,7 +8,7 @@ interface AppIntroProps {
 export default function AppIntro({ onComplete }: AppIntroProps) {
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const timer = window.setTimeout(onComplete, reducedMotion ? 700 : 2900);
+    const timer = window.setTimeout(onComplete, reducedMotion ? 900 : 5200);
     return () => window.clearTimeout(timer);
   }, [onComplete]);
 
