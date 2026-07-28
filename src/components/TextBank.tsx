@@ -255,7 +255,7 @@ export default function TextBank({ texts, onSelectText, onSaveText, onDeleteText
                       <div className="flex items-center gap-1">
                         <button
                           onClick={(e) => toggleFavorite(text, e)}
-                          className="p-1 rounded-lg text-gray-400 hover:text-amber-500 dark:text-gray-600 dark:hover:text-amber-400 transition-colors"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-500 dark:text-gray-600 dark:hover:text-amber-400 transition-colors"
                           title={text.isFavorite ? 'Remover dos favoritos' : 'Favoritar'}
                         >
                           <Star className={`w-4 h-4 ${text.isFavorite ? 'fill-amber-400 text-amber-500' : ''}`} />
@@ -269,7 +269,7 @@ export default function TextBank({ texts, onSelectText, onSaveText, onDeleteText
                                 onDeleteText(text.id);
                               }
                             }}
-                            className="p-1 rounded-lg text-gray-400 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors"
                             title="Deletar texto"
                           >
                             <Trash2 className="w-4 h-4" />

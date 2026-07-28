@@ -1,9 +1,9 @@
 {
-  "name": "teleprompter-inteligente",
+  "name": "speek-it",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://SEU_USUARIO.github.io/teleprompter-inteligente",
+  "homepage": "https://SEU_USUARIO.github.io/speek-it",
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
@@ -14,7 +14,6 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "bcryptjs": "^2.4.3",

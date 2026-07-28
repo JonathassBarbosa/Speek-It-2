@@ -54,7 +54,7 @@ export default function LoginPage() {
             <Mic className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-black text-white tracking-wider">
-            VOCALISE <span className="text-blue-500">PRO</span>
+            SPEEK<span className="text-blue-500">-IT</span>
           </h1>
           <p className="text-xs text-white/40 font-mono tracking-widest mt-1">SPEECH TELEPROMPTER</p>
         </div>
@@ -136,7 +136,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(p => !p)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-white/30 hover:text-white/60 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -165,7 +165,7 @@ export default function LoginPage() {
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {mode === 'login' ? 'Entrar no Vocalise' : 'Criar Minha Conta'}
+                  {mode === 'login' ? 'Entrar no Speek-It' : 'Criar Minha Conta'}
                 </>
               )}
             </button>
@@ -174,7 +174,7 @@ export default function LoginPage() {
           {/* Footer hint */}
           <p className="text-center text-[10px] text-white/20 mt-6 leading-relaxed">
             {mode === 'login'
-              ? 'Admin padrão: admin@vocalise.com / admin123'
+              ? 'Entre com sua conta para continuar seu treinamento.'
               : 'Ao criar uma conta, seus treinos são salvos com segurança no servidor.'}
           </p>
         </div>

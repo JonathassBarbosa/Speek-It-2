@@ -7,6 +7,13 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+/* Inputs, textareas and selects must be >=16px or iOS Safari auto-zooms on focus */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
 @layer utilities {
   /* Teleprompter reading overlay fade effects */
   .teleprompter-fade-top {
