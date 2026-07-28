@@ -23,6 +23,7 @@ import LoginPage from './components/LoginPage';
 import AdminDashboard from './components/AdminDashboard';
 import { VocalCoachChat } from './components/VocalCoachChat';
 import AppIntro from './components/brand/AppIntro';
+import BrandLockup from './components/brand/BrandLockup';
 
 export default function App() {
   const [showBrandIntro, setShowBrandIntro] = useState(
@@ -168,10 +169,10 @@ export default function App() {
       <div className="min-h-screen bg-[#050507] text-[#e0e0e0] font-sans flex flex-col">
         <nav className="h-16 flex items-center justify-between px-6 md:px-12 bg-[#0a0a0e]/85 backdrop-blur-md border-b border-white/5 z-40 sticky top-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center border border-white/10">
-              <span className="text-white font-black text-xs">S</span>
-            </div>
-            <span className="font-bold text-sm text-white">SPEEK-IT <span className="text-amber-400">ADMIN</span></span>
+            <BrandLockup compact />
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">
+              Admin
+            </span>
           </div>
           <div className="flex items-center gap-3 text-xs text-white/50">
             <span>{user.name}</span>

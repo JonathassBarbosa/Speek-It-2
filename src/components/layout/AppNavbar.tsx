@@ -5,6 +5,7 @@
 
 import { TrendingUp, ShieldCheck, LogOut, Sparkles } from 'lucide-react';
 import ThemeToggle from '../ThemeToggle';
+import BrandLockup from '../brand/BrandLockup';
 
 export type ActiveTab = 'train' | 'coach' | 'library' | 'history' | 'dashboard';
 
@@ -39,17 +40,7 @@ export default function AppNavbar({
     <>
       {/* Main Header / Navigation */}
       <nav className="h-20 flex items-center justify-between px-6 md:px-12 bg-[#0a0a0e]/85 backdrop-blur-md border-b border-white/5 z-40 sticky top-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)] border border-white/10">
-            <span className="text-white font-black text-sm font-display tracking-wider">S</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold tracking-wider text-sm md:text-base font-display text-white">
-              SPEEK<span className="text-blue-500">-IT</span>
-            </span>
-            <span className="text-[10px] text-gray-500 font-mono tracking-widest">SPEECH TELEPROMPTER</span>
-          </div>
-        </div>
+        <BrandLockup compact />
 
         {/* Desktop Tabs */}
         <div className="hidden md:flex gap-1.5 bg-white/5 p-1 rounded-xl border border-white/5">
