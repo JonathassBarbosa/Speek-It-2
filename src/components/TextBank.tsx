@@ -244,14 +244,6 @@ export default function TextBank({ texts, onSelectText, onSaveText, onDeleteText
                   key={text.id}
                   id={`text-card-${text.id}`}
                   onClick={() => onSelectText(text)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      onSelectText(text)
-                    }
-                  }}
                   className="group bg-white dark:bg-[#071014] hover:bg-gray-50/30 dark:hover:bg-[#0a171c] border border-gray-100 dark:border-white/10 hover:border-cyan-300 dark:hover:border-cyan-400/40 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[230px]"
                 >
                   <div className="space-y-3">

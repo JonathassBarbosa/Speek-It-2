@@ -47,14 +47,6 @@ export default function HistoryTab({
             <div
               key={evalObj.id}
               onClick={() => onSelectHistoryEval(evalObj)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  onSelectHistoryEval(evalObj)
-                }
-              }}
               className={`p-3 rounded-xl border transition-all cursor-pointer relative group ${
                 selectedHistoryEval?.id === evalObj.id
                   ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/10 border-blue-500/40'
