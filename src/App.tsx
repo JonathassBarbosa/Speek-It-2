@@ -21,7 +21,6 @@ import HistoryTab from './components/history/HistoryTab';
 import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
 import AdminDashboard from './components/AdminDashboard';
-import { VocalCoachChat } from './components/VocalCoachChat';
 import AppIntro from './components/brand/AppIntro';
 import BrandLockup from './components/brand/BrandLockup';
 
@@ -187,7 +186,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050507] text-[#e0e0e0] font-sans overflow-x-hidden flex flex-col relative selection:bg-indigo-500/30 selection:text-white">
+    <div className="min-h-screen bg-[#030608] text-[#e9fbfd] font-sans overflow-x-hidden flex flex-col relative selection:bg-[#00E7FF]/25 selection:text-white">
       {/* Dynamic Glow Spots for Immersive Aesthetic */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/15 rounded-full blur-[140px]"></div>
@@ -217,7 +216,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex overflow-hidden z-10 relative">
+      <main className="flex-1 flex overflow-hidden z-10 relative pb-[78px] lg:pb-0">
 
         {/* TAB 1: TRAINING & TELEPROMPTER */}
         {activeTab === 'train' && (
@@ -255,17 +254,32 @@ export default function App() {
 
         {/* TAB 2: INTERACTIVE AI VOCAL COACH */}
         {activeTab === 'coach' && (
-          <div className="flex-1 p-4 md:p-8 overflow-y-auto max-h-[calc(100vh-5rem)]">
-            <VocalCoachChat
-              sessionId={`user-${user.id}`}
-              initialMessage="Olá! Sou seu treinador de pronúncia. Envie uma frase em inglês por texto ou áudio. Vou orientar você em português do Brasil, passo a passo."
-            />
+          <div className="flex-1 grid place-items-center p-6">
+            <div className="max-w-md rounded-3xl border border-[#00E7FF]/15 bg-[#071014]/90 p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-[#00E7FF]/20 bg-[#00E7FF]/10 text-[#00E7FF]">
+                <span className="text-2xl">✦</span>
+              </div>
+              <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.24em] text-[#00E7FF]/70">
+                Em aprimoramento
+              </p>
+              <h2 className="mt-2 font-display text-2xl font-semibold text-white">Coach IA em standby</h2>
+              <p className="mt-3 text-sm leading-6 text-white/50">
+                Estamos preparando uma experiência vocal mais natural e precisa. Enquanto isso, todos os recursos de treinamento continuam disponíveis.
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveTab('train')}
+                className="mt-6 rounded-xl bg-[#00E7FF] px-5 py-3 text-xs font-bold text-[#021014] transition hover:brightness-110"
+              >
+                Voltar ao treinamento
+              </button>
+            </div>
           </div>
         )}
 
         {/* TAB 3: LIBRARY / PRESETS */}
         {activeTab === 'library' && (
-          <div className="flex-1 p-6 md:p-12 overflow-y-auto max-h-[calc(100vh-5rem)]">
+          <div className="flex-1 p-4 sm:p-6 md:p-10 overflow-y-auto max-h-[calc(100vh-4.5rem)]">
             <div className="max-w-7xl mx-auto">
               <TextBank
                 texts={library.texts}

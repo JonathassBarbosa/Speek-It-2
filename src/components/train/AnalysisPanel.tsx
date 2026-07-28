@@ -31,7 +31,7 @@ export default function AnalysisPanel({
   recordedVideoUrl,
 }: AnalysisPanelProps) {
   return (
-    <aside className="order-2 lg:order-3 w-full lg:w-96 bg-[#08080c]/90 border-l border-white/5 p-6 flex flex-col overflow-y-auto max-h-[400px] lg:max-h-none shrink-0 z-10">
+    <aside className="order-3 w-full lg:w-96 bg-[#061014]/90 border-t lg:border-t-0 lg:border-l border-white/[0.07] p-5 lg:p-6 flex flex-col overflow-y-auto max-h-none lg:max-h-[calc(100vh-4.5rem)] shrink-0 z-10">
 
       {isAnalyzing && (
         <div className="flex-1 flex flex-col items-center justify-center py-20 text-center space-y-4">
@@ -42,7 +42,7 @@ export default function AnalysisPanel({
           <div>
             <h4 className="font-bold text-white tracking-wide">Gerando Relatório Vocal...</h4>
             <p className="text-xs text-gray-500 mt-1 max-w-xs">
-              O Speek-It está processando sua dicção, ritmo e entonação. Aguarde um instante.
+              Estamos processando sua dicção, ritmo e entonação. Aguarde um instante.
             </p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function AnalysisPanel({
           <div>
             <h4 className="font-bold text-white text-sm">Pronto para Analisar</h4>
             <p className="text-xs text-gray-500 mt-2 max-w-xs leading-relaxed">
-              Clique no botão azul de <strong className="text-white">Microfone</strong> para gravar sua leitura. Ao finalizar, você receberá um relatório vocal gerado pela IA.
+              Toque no botão ciano de <strong className="text-white">microfone</strong> para gravar sua leitura. Ao finalizar, você receberá seu relatório vocal.
             </p>
           </div>
         </div>
@@ -90,7 +90,7 @@ export default function AnalysisPanel({
           {/* Performance Header */}
           <div className="bg-gradient-to-br from-blue-900/20 to-indigo-900/10 rounded-2xl p-5 border border-blue-500/15 relative overflow-hidden">
             <div className="absolute top-3 right-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-[9px] font-mono font-bold tracking-wide">
-              ANALISADO POR IA
+              ANÁLISE DO TREINO
             </div>
 
             <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Resultado do Treino</p>

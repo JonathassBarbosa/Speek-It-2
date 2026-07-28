@@ -75,7 +75,7 @@ export default function TrainingTab({
   recordedVideoUrl,
 }: TrainingTabProps) {
   return (
-    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden w-full">
+    <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden w-full">
       <ScriptSidebar texts={texts} selectedText={selectedText} onSelectText={onSelectText} />
 
       <TeleprompterMonitor

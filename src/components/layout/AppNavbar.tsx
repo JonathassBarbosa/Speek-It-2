@@ -3,7 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TrendingUp, ShieldCheck, LogOut, Sparkles } from 'lucide-react';
+import {
+  ChartNoAxesCombined,
+  History,
+  LibraryBig,
+  LogOut,
+  Mic2,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import ThemeToggle from '../ThemeToggle';
 import BrandLockup from '../brand/BrandLockup';
 
@@ -23,6 +32,22 @@ interface AppNavbarProps {
   onLogout: () => void;
 }
 
+interface NavigationItem {
+  id: ActiveTab;
+  label: string;
+  mobileLabel: string;
+  icon: LucideIcon;
+  disabled?: boolean;
+}
+
+const navigationItems: NavigationItem[] = [
+  { id: 'train', label: 'Treinamento', mobileLabel: 'Treinar', icon: Mic2 },
+  { id: 'coach', label: 'Coach IA', mobileLabel: 'Coach', icon: Sparkles, disabled: true },
+  { id: 'library', label: 'Meus roteiros', mobileLabel: 'Roteiros', icon: LibraryBig },
+  { id: 'history', label: 'Histórico', mobileLabel: 'Histórico', icon: History },
+  { id: 'dashboard', label: 'Evolução', mobileLabel: 'Evolução', icon: ChartNoAxesCombined },
+];
+
 export default function AppNavbar({
   activeTab,
   onSelectTab,
@@ -36,171 +61,139 @@ export default function AppNavbar({
   onShowAdmin,
   onLogout,
 }: AppNavbarProps) {
+  const navigate = (item: NavigationItem) => {
+    if (item.disabled) return;
+    if (item.id === 'history') onOpenHistory();
+    else onSelectTab(item.id);
+  };
+
   return (
     <>
-      {/* Main Header / Navigation */}
-      <nav className="h-20 flex items-center justify-between px-6 md:px-12 bg-[#0a0a0e]/85 backdrop-blur-md border-b border-white/5 z-40 sticky top-0">
-        <BrandLockup compact />
+      <header className="sticky top-0 z-50 h-[72px] border-b border-white/[0.07] bg-[#05080b]/90 px-4 backdrop-blur-xl md:px-7 xl:px-10">
+        <div className="mx-auto flex h-full max-w-[1680px] items-center justify-between gap-5">
+          <BrandLockup compact />
 
-        {/* Desktop Tabs */}
-        <div className="hidden md:flex gap-1.5 bg-white/5 p-1 rounded-xl border border-white/5">
-          <button
-            onClick={() => onSelectTab('train')}
-            className={`px-5 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              activeTab === 'train'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
+          <nav
+            className="hidden items-center gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.035] p-1.5 lg:flex"
+            aria-label="Navegação principal"
           >
-            Treinamento & Leitura
-          </button>
-          <button
-            onClick={() => onSelectTab('coach')}
-            className={`px-5 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'coach'
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Coach IA
-          </button>
-          <button
-            onClick={() => onSelectTab('library')}
-            className={`px-5 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              activeTab === 'library'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Meus Roteiros
-          </button>
-          <button
-            onClick={onOpenHistory}
-            className={`px-5 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer relative ${
-              activeTab === 'history'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Histórico de Treinos
-            {evaluationsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#050507]">
-                {evaluationsCount}
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const selected = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => navigate(item)}
+                  disabled={item.disabled}
+                  title={item.disabled ? 'Coach IA em standby' : item.label}
+                  className={`relative flex min-h-10 items-center gap-2 rounded-xl px-3.5 text-[11px] font-semibold transition-all xl:px-4 ${
+                    selected
+                      ? 'bg-[#00E7FF] text-[#021014] shadow-[0_0_24px_rgba(0,231,255,0.18)]'
+                      : item.disabled
+                        ? 'cursor-not-allowed text-white/25'
+                        : 'text-white/55 hover:bg-white/[0.06] hover:text-white'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                  {item.disabled && (
+                    <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[7px] uppercase tracking-wider text-white/35">
+                      Pausa
+                    </span>
+                  )}
+                  {item.id === 'history' && evaluationsCount > 0 && (
+                    <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-amber-400 px-1 text-[8px] font-black text-black">
+                      {evaluationsCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.035] px-3 py-2 xl:flex">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isMicAllowed ? 'bg-[#00E7FF] shadow-[0_0_8px_#00E7FF]' : 'bg-white/20'
+                }`}
+              />
+              <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-white/45">
+                {isMicAllowed ? 'Microfone pronto' : 'Microfone aguardando'}
               </span>
-            )}
-          </button>
-          <button
-            onClick={() => onSelectTab('dashboard')}
-            className={`px-5 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'dashboard'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5" />
-            Dashboard
-          </button>
-        </div>
-
-        {/* Right Corner Utility Bar */}
-        <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-            <div className={`w-2.5 h-2.5 rounded-full ${isMicAllowed ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-            <span className="text-[10px] font-mono text-white/70">
-              {isMicAllowed ? 'MICROFONE: PRONTO' : 'MICROFONE: BLOQUEADO'}
-            </span>
-          </div>
-
-          <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
-
-          {/* Compact icon-only Admin/Logout for mobile, where there's no room for labeled buttons */}
-          <div className="flex md:hidden items-center gap-1.5">
-            {isAdmin && (
-              <button
-                onClick={onShowAdmin}
-                title="Admin"
-                className="w-9 h-9 flex items-center justify-center bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-400 rounded-lg transition-all"
-              >
-                <ShieldCheck className="w-4 h-4" />
-              </button>
-            )}
-            <button
-              onClick={onLogout}
-              title="Sair"
-              className="w-9 h-9 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-lg transition-all"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* User info + logout */}
-          <div className="hidden md:flex items-center gap-2">
-            {isAdmin && (
-              <button
-                onClick={onShowAdmin}
-                className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-400 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all"
-              >
-                Admin
-              </button>
-            )}
-            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <span className="text-[10px] font-mono text-white/60 max-w-[120px] truncate">{userName}</span>
             </div>
+
+            <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={onShowAdmin}
+                aria-label="Abrir administração"
+                className="grid h-10 w-10 place-items-center rounded-xl border border-amber-400/20 bg-amber-400/[0.07] text-amber-300 transition hover:bg-amber-400/15"
+              >
+                <ShieldCheck className="h-4 w-4" />
+              </button>
+            )}
+
+            <div className="hidden items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.035] py-1.5 pl-3 pr-1.5 md:flex">
+              <span className="max-w-28 truncate text-[10px] font-medium text-white/50">{userName}</span>
+              <button
+                type="button"
+                onClick={onLogout}
+                aria-label="Sair"
+                className="grid h-7 w-7 place-items-center rounded-lg text-white/35 transition hover:bg-white/10 hover:text-white"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
             <button
+              type="button"
               onClick={onLogout}
-              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white text-[10px] font-bold rounded-lg transition-all"
+              aria-label="Sair"
+              className="grid h-10 w-10 place-items-center rounded-xl border border-white/[0.07] bg-white/[0.035] text-white/45 md:hidden"
             >
-              Sair
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* Mobile Navigation Bar */}
-      <div className="md:hidden flex bg-[#08080c] border-b border-white/5 p-2 gap-1 justify-center z-30">
-        <button
-          onClick={() => onSelectTab('train')}
-          className={`flex-1 py-2 text-center rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'train' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' : 'text-gray-400'
-          }`}
-        >
-          Treino
-        </button>
-        <button
-          onClick={() => onSelectTab('coach')}
-          className={`flex-1 py-2 text-center rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'coach' ? 'bg-violet-600/20 text-violet-400 border border-violet-500/20' : 'text-gray-400'
-          }`}
-        >
-          Coach IA
-        </button>
-        <button
-          onClick={() => onSelectTab('library')}
-          className={`flex-1 py-2 text-center rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'library' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' : 'text-gray-400'
-          }`}
-        >
-          Roteiros
-        </button>
-        <button
-          onClick={onOpenHistory}
-          className={`flex-1 py-2 text-center rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'history' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' : 'text-gray-400'
-          }`}
-        >
-          Histórico ({evaluationsCount})
-        </button>
-        <button
-          onClick={() => onSelectTab('dashboard')}
-          className={`flex-1 py-2 text-center rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'dashboard' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' : 'text-gray-400'
-          }`}
-        >
-          Dashboard
-        </button>
-      </div>
+      <nav
+        className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-5 rounded-[1.35rem] border border-white/10 bg-[#071014]/95 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl lg:hidden"
+        aria-label="Navegação móvel"
+      >
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
+          const selected = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              disabled={item.disabled}
+              onClick={() => navigate(item)}
+              className={`relative flex min-h-[54px] flex-col items-center justify-center gap-1 rounded-2xl text-[9px] font-semibold transition ${
+                selected
+                  ? 'bg-[#00E7FF] text-[#021014]'
+                  : item.disabled
+                    ? 'text-white/20'
+                    : 'text-white/45 active:bg-white/10'
+              }`}
+            >
+              <Icon className="h-[18px] w-[18px]" />
+              <span>{item.mobileLabel}</span>
+              {item.disabled && <span className="absolute right-2 top-1 text-[6px] uppercase">Pausa</span>}
+              {item.id === 'history' && evaluationsCount > 0 && (
+                <span className="absolute right-2 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-amber-400 px-1 text-[8px] font-black text-black">
+                  {evaluationsCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
     </>
   );
 }

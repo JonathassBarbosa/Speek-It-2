@@ -417,7 +417,7 @@ export default function Dashboard({ evaluations, onGoTrain }: Props) {
   }
 
   return (
-    <div className="flex-1 p-6 md:p-10 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 5rem)' }}>
+    <div className="flex-1 p-4 sm:p-6 md:p-10 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 4.5rem)' }}>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div>
@@ -428,7 +428,7 @@ export default function Dashboard({ evaluations, onGoTrain }: Props) {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#09090d] rounded-2xl p-5 border border-white/5">
             <div className="flex items-center gap-2 mb-3">
               <Mic className="w-4 h-4 text-blue-400 shrink-0" />

@@ -15,24 +15,26 @@ interface ScriptSidebarProps {
 
 export default function ScriptSidebar({ texts, selectedText, onSelectText }: ScriptSidebarProps) {
   return (
-    <aside className="order-3 lg:order-1 w-full lg:w-80 bg-[#08080a]/70 border-r border-white/5 flex flex-col p-5 space-y-4 shrink-0 lg:max-h-[calc(100vh-5rem)] overflow-y-auto">
+    <aside className="order-1 w-full lg:w-80 bg-[#061014]/75 border-b lg:border-b-0 lg:border-r border-white/[0.07] flex flex-col p-4 lg:p-5 space-y-3 lg:space-y-4 shrink-0 lg:max-h-[calc(100vh-4.5rem)] overflow-y-auto">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-widest text-white/40">Selecione o Roteiro</span>
-        <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">
+        <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/45">Roteiro do treino</span>
+        <span className="text-[9px] font-mono text-blue-400 bg-blue-500/10 px-2 py-1 rounded-full border border-blue-500/20">
           {texts.length} disponíveis
         </span>
       </div>
 
-      <div className="space-y-2 max-h-48 lg:max-h-none overflow-y-auto pr-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-2 lg:max-h-none lg:overflow-y-auto lg:pr-1">
         {texts.map((text) => (
-          <div
+          <button
+            type="button"
             key={text.id}
             onClick={() => onSelectText(text)}
-            className={`p-3 rounded-xl border transition-all cursor-pointer ${
+            className={`min-w-[230px] lg:min-w-0 lg:w-full p-3 rounded-xl border text-left transition-all cursor-pointer ${
               selectedText?.id === text.id
-                ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/10 border-blue-500/40 shadow-md shadow-blue-500/5'
+                ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/10 border-blue-500/40 shadow-[0_0_20px_rgba(0,231,255,0.06)]'
                 : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10'
             }`}
+            aria-pressed={selectedText?.id === text.id}
           >
             <div className="flex justify-between items-start gap-1">
               <p className={`text-xs font-bold uppercase tracking-wide px-1.5 py-0.2 rounded ${
@@ -53,7 +55,7 @@ export default function ScriptSidebar({ texts, selectedText, onSelectText }: Scr
               <span>Tempo estimado: ~{text.estimatedDuration}s</span>
               {text.isFavorite && <Star className="w-3 h-3 fill-amber-400 text-amber-400" />}
             </div>
-          </div>
+          </button>
         ))}
       </div>
 

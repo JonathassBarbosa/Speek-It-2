@@ -31,10 +31,10 @@ export default function HistoryTab({
   onSelectText,
 }: HistoryTabProps) {
   return (
-    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden w-full">
+    <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden w-full">
 
       {/* Left side: list of evaluations */}
-      <aside className="w-full lg:w-80 bg-[#08080a]/70 border-r border-white/5 flex flex-col p-5 space-y-4 shrink-0 lg:max-h-[calc(100vh-5rem)] overflow-y-auto">
+      <aside className="w-full lg:w-80 bg-[#071014]/85 border-b lg:border-b-0 lg:border-r border-cyan-400/10 flex flex-col p-4 sm:p-5 space-y-4 shrink-0 lg:max-h-[calc(100vh-4.5rem)] overflow-y-auto">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-widest text-white/40">Minhas Gravações</span>
           <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
@@ -42,16 +42,24 @@ export default function HistoryTab({
           </span>
         </div>
 
-        <div className="space-y-2 max-h-56 lg:max-h-none overflow-y-auto pr-1">
+        <div className="flex lg:block gap-3 lg:space-y-2 max-h-56 lg:max-h-none overflow-x-auto lg:overflow-y-auto pb-2 lg:pb-0 pr-1">
           {evaluations.map((evalObj) => (
             <div
               key={evalObj.id}
               onClick={() => onSelectHistoryEval(evalObj)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onSelectHistoryEval(evalObj)
+                }
+              }}
               className={`p-3 rounded-xl border transition-all cursor-pointer relative group ${
                 selectedHistoryEval?.id === evalObj.id
                   ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/10 border-blue-500/40'
                   : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10'
-              }`}
+              } min-w-[240px] lg:min-w-0`}
             >
               <div className="flex justify-between items-start gap-1">
                 <p className="text-[10px] font-mono text-white/40">
@@ -93,7 +101,7 @@ export default function HistoryTab({
       </aside>
 
       {/* Right side: Selected Evaluation Details */}
-      <div className="flex-1 bg-[#050507] p-6 md:p-10 overflow-y-auto max-h-[calc(100vh-5rem)]">
+      <div className="flex-1 bg-[#030608] p-4 sm:p-6 md:p-10 overflow-y-auto lg:max-h-[calc(100vh-4.5rem)]">
         {selectedHistoryEval ? (
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
 
