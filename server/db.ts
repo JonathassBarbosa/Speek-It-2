@@ -12,8 +12,14 @@ import bcrypt from 'bcryptjs';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const EVALS_FILE = path.join(DATA_DIR, 'evaluations.json');
-const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+const REDIS_URL =
+  process.env.KV_REST_API_URL ||
+  process.env.UPSTASH_REDIS_REST_URL ||
+  process.env.UPSTASH_KV_REST_API_URL;
+const REDIS_TOKEN =
+  process.env.KV_REST_API_TOKEN ||
+  process.env.UPSTASH_REDIS_REST_TOKEN ||
+  process.env.UPSTASH_KV_REST_API_TOKEN;
 const USERS_KEY = 'speek-it:users';
 const EVALS_KEY = 'speek-it:evaluations';
 
