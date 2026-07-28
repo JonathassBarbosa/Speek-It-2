@@ -1,8 +1,8 @@
 import express from 'express';
-import authRoutes from '../server/routes/auth';
-import adminRoutes from '../server/routes/admin';
-import evaluationsRoutes from '../server/routes/evaluations';
-import { initDefaultAdmin } from '../server/db';
+import authRoutes from '../server/routes/auth.js';
+import adminRoutes from '../server/routes/admin.js';
+import evaluationsRoutes from '../server/routes/evaluations.js';
+import { initDefaultAdmin } from '../server/db.js';
 
 const app = express();
 

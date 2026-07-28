@@ -6,8 +6,8 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { DbUser, readUsers, writeUsers } from '../db';
-import { authMiddleware, JWT_SECRET } from '../auth';
+import { DbUser, readUsers, writeUsers } from '../db.js';
+import { authMiddleware, JWT_SECRET } from '../auth.js';
 
 const router = Router();
 

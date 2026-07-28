@@ -4,8 +4,8 @@
  */
 
 import { Router } from 'express';
-import { DbEval, readEvals, readUsers, writeEvals } from '../db';
-import { authMiddleware } from '../auth';
+import { DbEval, readEvals, readUsers, writeEvals } from '../db.js';
+import { authMiddleware } from '../auth.js';
 
 const router = Router();
 

@@ -4,8 +4,8 @@
  */
 
 import { Router } from 'express';
-import { readEvals, readUsers } from '../db';
-import { adminOnly, authMiddleware } from '../auth';
+import { readEvals, readUsers } from '../db.js';
+import { adminOnly, authMiddleware } from '../auth.js';
 
 const router = Router();
 
