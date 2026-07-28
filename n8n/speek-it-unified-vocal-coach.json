@@ -243,18 +243,17 @@
     },
     {
       "parameters": {
-        "promptType": "define",
-        "text": "={{ $json.text }}",
-        "messages": {
-          "messageValues": [
-            {
-              "message": "Você é o treinador de pronúncia do Speek-It: caloroso, paciente e prático. Atenda usuários brasileiros e responda sempre em português do Brasil. Use inglês somente nas palavras, frases e exemplos que o aluno deve praticar, sempre acompanhados de explicação em português. Dê instruções curtas sobre língua, lábios, mandíbula, respiração, sílaba tônica e ritmo. Evite termos técnicos sem explicação. Limite a resposta a 120 palavras e termine com um exercício concreto ou uma pergunta curta para continuar a prática."
-            }
-          ]
+        "method": "POST",
+        "url": "http://speek-it-ollama:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  model: 'qwen2.5:3b',\n  stream: false,\n  messages: [\n    {\n      role: 'system',\n      content: 'Você é o treinador de pronúncia do Speek-It: caloroso, paciente e prático. Atenda usuários brasileiros e responda sempre em português do Brasil. Use inglês somente nas palavras, frases e exemplos que o aluno deve praticar, sempre acompanhados de explicação em português. Dê instruções curtas sobre língua, lábios, mandíbula, respiração, sílaba tônica e ritmo. Evite termos técnicos sem explicação. Limite a resposta a 120 palavras e termine com um exercício concreto ou uma pergunta curta para continuar a prática.'\n    },\n    {\n      role: 'user',\n      content: $json.text\n    }\n  ]\n} }}",
+        "options": {
+          "timeout": 120000
         }
       },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.7,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [540, 300],
       "id": "coach-chain",
       "name": "Vocal Coach Response"
@@ -290,7 +289,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ {\n  textResponse: $('Vocal Coach Response').item.json.text ?? $('Vocal Coach Response').item.json.output ?? $('Vocal Coach Response').item.json.response,\n  audioBase64: $binary?.data?.data ?? null,\n  timestamp: $now.toISO()\n} }}",
+        "responseBody": "={{ {\n  textResponse: $json.message?.content ?? 'Não consegui preparar a resposta agora.',\n  audioBase64: null,\n  timestamp: $now.toISO()\n} }}",
         "options": {
           "responseCode": 200,
           "responseHeaders": {
@@ -458,29 +457,7 @@
         ]
       ]
     },
-    "OpenAI Chat Model - Coach": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Vocal Coach Response",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Vocal Coach Response": {
-      "main": [
-        [
-          {
-            "node": "OpenAI - Coach Voice",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI - Coach Voice": {
       "main": [
         [
           {

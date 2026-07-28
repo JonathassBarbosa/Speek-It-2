@@ -47,21 +47,14 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const speechRecognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  const stopMediaStream = () => {
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    mediaStreamRef.current = null;
-  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  useEffect(() => () => stopMediaStream(), []);
+  useEffect(() => () => speechRecognitionRef.current?.abort(), []);
 
   // Enviar mensagem para a API unificada do n8n
   const sendToN8n = async (payload: { text?: string; audioBlob?: Blob }) => {
@@ -129,6 +122,12 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
       if (coachAudioUrl) {
         const audio = new Audio(coachAudioUrl);
         audio.play().catch((err) => console.warn('Autoplay bloqueado pelo navegador:', err));
+      } else if ('speechSynthesis' in window && data.textResponse) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(data.textResponse);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
       }
     } catch (error) {
       console.error('Erro na comunicação com o Coach:', error);
@@ -161,42 +160,50 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setError('O reconhecimento de voz não está disponível neste navegador. Use o campo de texto.');
+        return;
+      }
 
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
+      const recognition = new SpeechRecognition();
+      speechRecognitionRef.current = recognition;
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
 
-      mediaRecorderRef.current.onstop = () => {
-        stopMediaStream();
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+        if (!transcript) return;
         const userMsg: ChatMessage = {
           id: Date.now().toString(),
           sender: 'user',
-          text: '🎤 Mensagem de voz gravada',
+          text: `🎤 ${transcript}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, userMsg]);
-        sendToN8n({ audioBlob });
+        sendToN8n({ text: transcript });
       };
 
-      mediaRecorderRef.current.start();
+      recognition.onerror = () => {
+        setError('Não consegui reconhecer sua fala. Tente novamente ou use o campo de texto.');
+        setIsRecording(false);
+      };
+      recognition.onend = () => setIsRecording(false);
+
+      recognition.start();
       setIsRecording(true);
     } catch (err) {
       console.error('Erro ao acessar microfone:', err);
       setError('Não foi possível acessar o microfone. Autorize o acesso nas configurações do navegador.');
-      stopMediaStream();
+      setIsRecording(false);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (speechRecognitionRef.current && isRecording) {
+      speechRecognitionRef.current.stop();
       setIsRecording(false);
     }
   };
