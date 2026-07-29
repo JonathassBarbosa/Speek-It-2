@@ -69,6 +69,7 @@ html:not(.dark) [class*="bg-[#0a171c]"] {
 
 html:not(.dark) [class*="text-[#e0e0e0]"],
 html:not(.dark) [class*="text-[#e9fbfd]"],
+html:not(.dark) [class*="text-[#f3f4f6]"],
 html:not(.dark) .text-white {
   color: #0b161a !important;
 }
