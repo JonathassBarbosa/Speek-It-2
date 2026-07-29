@@ -47,9 +47,9 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const recognitionRef = useRef<any>(null);
-  const transcriptRef = useRef('');
-  const shouldSendTranscriptRef = useRef(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -57,11 +57,8 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   }, [messages, isLoading]);
 
   useEffect(() => () => {
-    try {
-      recognitionRef.current?.abort();
-    } catch {
-      // O reconhecimento já pode ter sido encerrado pelo navegador.
-    }
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaRecorderRef.current = null;
     window.speechSynthesis?.cancel();
   }, []);
 
@@ -187,71 +184,58 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
     sendToN8n({ text: textToSend });
   };
 
-  const sendVoiceTranscript = () => {
-    const transcript = transcriptRef.current.trim();
-    if (!transcript) {
-      setError('Não consegui reconhecer sua fala. Tente novamente mais perto do microfone.');
-      return;
-    }
-
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'user',
-      text: transcript,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setInputText('');
-    sendToN8n({ text: transcript });
-  };
-
   const startRecording = async () => {
     try {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        setError('Este navegador não oferece reconhecimento de voz. Use o campo de texto ou abra o app no Chrome, Safari ou Edge.');
-        return;
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const preferredTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+      ];
+      const supportedType = preferredTypes.find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = supportedType
+        ? new MediaRecorder(stream, { mimeType: supportedType })
+        : new MediaRecorder(stream);
 
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'pt-BR';
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      transcriptRef.current = '';
-      shouldSendTranscriptRef.current = false;
-      setInputText('');
+      audioChunksRef.current = [];
       setError(null);
 
-      recognition.onresult = (event: any) => {
-        let finalText = transcriptRef.current;
-        let interimText = '';
-        for (let index = event.resultIndex; index < event.results.length; index += 1) {
-          const part = event.results[index][0].transcript;
-          if (event.results[index].isFinal) finalText += `${part} `;
-          else interimText += part;
-        }
-        transcriptRef.current = finalText;
-        setInputText(`${finalText}${interimText}`.trim());
-      };
-
-      recognition.onerror = (event: any) => {
-        if (event.error !== 'aborted' && event.error !== 'no-speech') {
-          setError('Não foi possível reconhecer sua fala. Confira a permissão do microfone.');
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
       };
 
-      recognition.onend = () => {
-        recognitionRef.current = null;
-        setIsRecording(false);
-        if (shouldSendTranscriptRef.current) {
-          shouldSendTranscriptRef.current = false;
-          sendVoiceTranscript();
-        }
+      recorder.onerror = () => {
+        setError('A gravação foi interrompida pelo navegador. Tente novamente.');
       };
 
-      recognitionRef.current = recognition;
-      recognition.start();
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: recorder.mimeType || 'audio/webm',
+        });
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+        mediaRecorderRef.current = null;
+
+        if (audioBlob.size < 1000) {
+          setError('O áudio ficou muito curto. Grave novamente e fale por alguns segundos.');
+          return;
+        }
+
+        const userMsg: ChatMessage = {
+          id: Date.now().toString(),
+          sender: 'user',
+          text: 'Áudio enviado para análise',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, userMsg]);
+        sendToN8n({ audioBlob });
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
       setIsRecording(true);
     } catch (err) {
       console.error('Erro ao acessar microfone:', err);
@@ -261,9 +245,10 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   };
 
   const stopRecording = () => {
-    if (!recognitionRef.current || !isRecording) return;
-    shouldSendTranscriptRef.current = true;
-    recognitionRef.current.stop();
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || !isRecording || recorder.state === 'inactive') return;
+    setIsRecording(false);
+    recorder.stop();
   };
 
   return (
