@@ -228,11 +228,7 @@ async function createAchievementPng(
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas indisponível');
 
-  const background = ctx.createLinearGradient(0, 0, 1200, 1500);
-  background.addColorStop(0, '#020608');
-  background.addColorStop(0.58, '#071014');
-  background.addColorStop(1, `${medal.accent}26`);
-  ctx.fillStyle = background;
+  ctx.fillStyle = '#03080B';
   ctx.fillRect(0, 0, 1200, 1500);
 
   ctx.strokeStyle = `${medal.accent}1F`;
