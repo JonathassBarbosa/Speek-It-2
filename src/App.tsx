@@ -259,7 +259,7 @@ export default function App() {
           <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-8">
             <VocalCoachChat
               sessionId={user?.id ?? 'sessao-local'}
-              initialMessage="Olá! Eu sou seu Coach Speek It. Envie uma frase em inglês por texto ou voz. Vou orientar sua pronúncia em português do Brasil, com exercícios curtos e objetivos."
+              initialMessage="Olá! Eu sou seu Coach Speek It. Envie uma fala em português por texto ou voz. Vou ajudar você a desenvolver clareza, dicção, ritmo e segurança, com orientações curtas e objetivas."
             />
           </div>
         )}

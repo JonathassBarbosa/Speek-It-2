@@ -215,7 +215,7 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
       }
 
       const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
+      recognition.lang = 'pt-BR';
       recognition.continuous = true;
       recognition.interimResults = true;
       transcriptRef.current = '';
@@ -388,7 +388,7 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
-          placeholder={isRecording ? 'Gravando áudio...' : 'Tire dúvidas de pronúncia ou envie texto...'}
+          placeholder={isRecording ? 'Ouvindo sua fala em português...' : 'Envie uma fala ou tire dúvidas de comunicação...'}
           disabled={isRecording || isLoading}
           className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-50"
         />

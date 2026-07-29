@@ -10,7 +10,7 @@ Arquivo para importação:
 O arquivo `speek-it-coach-local.json` usa:
 
 - Gemini Flash no nível gratuito;
-- transcrição de voz feita pelo navegador;
+- transcrição de voz em português do Brasil feita pelo navegador;
 - voz em português do Brasil fornecida pelo aparelho do usuário;
 - credencial protegida pelo cofre do n8n;
 - nenhuma cobrança por chamada dentro dos limites gratuitos.
