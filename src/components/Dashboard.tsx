@@ -736,13 +736,19 @@ export default function Dashboard({ evaluations, onGoTrain, userName }: Props) {
                   onClick={() => medal.earned && setSelectedMedal(medal)}
                   disabled={!medal.earned}
                   title={`${medal.label}: ${medal.description}`}
-                  className={`group flex min-h-28 flex-col items-center justify-center rounded-2xl border p-2 transition-all ${
+                  className={`group relative flex min-h-28 flex-col items-center justify-center overflow-hidden rounded-2xl border p-2 transition-all ${
                     medal.earned
                       ? 'cursor-pointer border-white/10 bg-white/[0.035] hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-cyan-400/[0.04]'
                       : 'cursor-not-allowed border-white/5 bg-white/[0.015] opacity-60'
                   }`}
-                  style={!medal.earned ? { borderBottomColor: `${medal.accent}55` } : undefined}
                 >
+                  {!medal.earned && (
+                    <span
+                      className="absolute inset-x-3 top-0 h-[3px] rounded-b-full opacity-75"
+                      style={{ backgroundColor: medal.accent }}
+                      aria-hidden="true"
+                    />
+                  )}
                   <AchievementBadge medal={medal} />
                   <span className="mt-2 line-clamp-2 text-center text-[9px] font-bold leading-3 text-white/55">
                     {medal.label}
