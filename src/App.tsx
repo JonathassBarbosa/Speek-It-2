@@ -309,6 +309,7 @@ export default function App() {
         {activeTab === 'dashboard' && (
           <Dashboard
             evaluations={library.evaluations}
+            userName={user.name}
             onGoTrain={() => setActiveTab('train')}
           />
         )}
