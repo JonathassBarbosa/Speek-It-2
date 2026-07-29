@@ -233,7 +233,7 @@ async function createAchievementGif(
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas indisponível');
   const gif = GIFEncoder();
-  const frames = 12;
+  const frames = 8;
   const easeOutBack = (value: number) => {
     const c1 = 1.70158;
     const c3 = c1 + 1;
@@ -352,7 +352,7 @@ async function createAchievementGif(
     const rgba = ctx.getImageData(0, 0, width, height).data;
     const palette = quantize(rgba, 64);
     const index = applyPalette(rgba, palette);
-    gif.writeFrame(index, width, height, { palette, delay: 90, repeat: 0 });
+    gif.writeFrame(index, width, height, { palette, delay: 120, repeat: 0 });
   }
 
   gif.finish();
