@@ -40,7 +40,9 @@ export default function App() {
 
   // App-level UI state
   const [activeTab, setActiveTab] = useState<ActiveTab>('train');
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('speekit_theme') !== 'light';
+  });
   const [isRecording, setIsRecording] = useState(false);
 
   // Feature hooks — wired together below, each owns one concern
@@ -89,15 +91,12 @@ export default function App() {
     handleResetTeleprompter: teleprompter.handleResetTeleprompter,
   });
 
-  // Check for Dark Mode class on body
+  // Apply and persist the user-selected theme.
   useEffect(() => {
-    if (document.documentElement.classList.contains('dark')) {
-      setDarkMode(true);
-    } else {
-      document.documentElement.classList.add('dark'); // Immersive default is dark
-      setDarkMode(true);
-    }
-  }, []);
+    document.documentElement.classList.toggle('dark', darkMode);
+    document.documentElement.style.colorScheme = darkMode ? 'dark' : 'light';
+    localStorage.setItem('speekit_theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   // Quick action: Choose Text
   const handleSelectText = (text: TextTemplate) => {
