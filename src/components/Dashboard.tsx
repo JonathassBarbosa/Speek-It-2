@@ -224,14 +224,16 @@ async function createAchievementGif(
   stats: { sessions: number; average: number; best: number; streak: number }
 ): Promise<Blob> {
   const canvas = document.createElement('canvas');
-  const width = 600;
-  const height = 750;
+  const width = 480;
+  const height = 600;
+  const logicalWidth = 600;
+  const logicalHeight = 750;
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas indisponível');
   const gif = GIFEncoder();
-  const frames = 18;
+  const frames = 12;
   const easeOutBack = (value: number) => {
     const c1 = 1.70158;
     const c3 = c1 + 1;
@@ -239,24 +241,25 @@ async function createAchievementGif(
   };
 
   for (let frame = 0; frame < frames; frame++) {
+    ctx.setTransform(0.8, 0, 0, 0.8, 0, 0);
     const phase = frame / (frames - 1);
     const reveal = Math.min(1, phase * 2.2);
     const badgeScale = Math.max(0, easeOutBack(reveal));
     const pulse = 0.5 + Math.sin(phase * Math.PI * 4) * 0.5;
 
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    const gradient = ctx.createLinearGradient(0, 0, logicalWidth, logicalHeight);
     gradient.addColorStop(0, '#020608');
     gradient.addColorStop(0.6, '#071014');
     gradient.addColorStop(1, `${medal.accent}2A`);
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
     ctx.strokeStyle = `${medal.accent}20`;
     ctx.lineWidth = 1;
     for (let x = -200; x < 800; x += 58) {
       ctx.beginPath();
       ctx.moveTo(x + phase * 50, 0);
-      ctx.lineTo(x + 350 + phase * 50, height);
+      ctx.lineTo(x + 350 + phase * 50, logicalHeight);
       ctx.stroke();
     }
 
@@ -347,7 +350,7 @@ async function createAchievementGif(
     ctx.globalAlpha = 1;
 
     const rgba = ctx.getImageData(0, 0, width, height).data;
-    const palette = quantize(rgba, 128);
+    const palette = quantize(rgba, 64);
     const index = applyPalette(rgba, palette);
     gif.writeFrame(index, width, height, { palette, delay: 90, repeat: 0 });
   }
