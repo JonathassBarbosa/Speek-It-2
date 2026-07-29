@@ -4,7 +4,6 @@
  */
 
 import { useMemo, useState } from 'react';
-import { GIFEncoder, applyPalette, quantize } from 'gifenc';
 import { SpeechEvaluation } from '../types';
 import {
   Award,
@@ -218,145 +217,119 @@ function AchievementBadge({ medal, compact = false }: { medal: Medal; compact?: 
   );
 }
 
-async function createAchievementGif(
+async function createAchievementPng(
   medal: Medal,
   userName: string,
   stats: { sessions: number; average: number; best: number; streak: number }
 ): Promise<Blob> {
   const canvas = document.createElement('canvas');
-  const width = 480;
-  const height = 600;
-  const logicalWidth = 600;
-  const logicalHeight = 750;
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = 1200;
+  canvas.height = 1500;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas indisponível');
-  const gif = GIFEncoder();
-  const frames = 8;
-  const easeOutBack = (value: number) => {
-    const c1 = 1.70158;
-    const c3 = c1 + 1;
-    return 1 + c3 * Math.pow(value - 1, 3) + c1 * Math.pow(value - 1, 2);
-  };
 
-  for (let frame = 0; frame < frames; frame++) {
-    ctx.setTransform(0.8, 0, 0, 0.8, 0, 0);
-    const phase = frame / (frames - 1);
-    const reveal = Math.min(1, phase * 2.2);
-    const badgeScale = Math.max(0, easeOutBack(reveal));
-    const pulse = 0.5 + Math.sin(phase * Math.PI * 4) * 0.5;
+  const background = ctx.createLinearGradient(0, 0, 1200, 1500);
+  background.addColorStop(0, '#020608');
+  background.addColorStop(0.58, '#071014');
+  background.addColorStop(1, `${medal.accent}26`);
+  ctx.fillStyle = background;
+  ctx.fillRect(0, 0, 1200, 1500);
 
-    const gradient = ctx.createLinearGradient(0, 0, logicalWidth, logicalHeight);
-    gradient.addColorStop(0, '#020608');
-    gradient.addColorStop(0.6, '#071014');
-    gradient.addColorStop(1, `${medal.accent}2A`);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
-
-    ctx.strokeStyle = `${medal.accent}20`;
-    ctx.lineWidth = 1;
-    for (let x = -200; x < 800; x += 58) {
-      ctx.beginPath();
-      ctx.moveTo(x + phase * 50, 0);
-      ctx.lineTo(x + 350 + phase * 50, logicalHeight);
-      ctx.stroke();
-    }
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#00E7FF';
-    ctx.font = '800 23px system-ui, sans-serif';
-    ctx.fillText('SPEEK IT.', 40, 50);
-    ctx.fillStyle = 'rgba(255,255,255,.45)';
-    ctx.font = '600 10px system-ui, sans-serif';
-    ctx.fillText('SUA VOZ EM MOVIMENTO', 41, 70);
-
-    ctx.save();
-    ctx.translate(300, 235);
-    ctx.scale(badgeScale, badgeScale);
-    ctx.shadowColor = medal.accent;
-    ctx.shadowBlur = 18 + pulse * 28;
+  ctx.strokeStyle = `${medal.accent}1F`;
+  ctx.lineWidth = 2;
+  for (let x = -400; x < 1500; x += 110) {
     ctx.beginPath();
-    ctx.moveTo(0, -105);
-    ctx.lineTo(95, -64);
-    ctx.lineTo(95, 24);
-    ctx.quadraticCurveTo(95, 96, 0, 136);
-    ctx.quadraticCurveTo(-95, 96, -95, 24);
-    ctx.lineTo(-95, -64);
-    ctx.closePath();
-    const shield = ctx.createLinearGradient(-100, -100, 100, 140);
-    shield.addColorStop(0, `${medal.accent}88`);
-    shield.addColorStop(1, '#061116');
-    ctx.fillStyle = shield;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = medal.accent;
-    ctx.lineWidth = 5;
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 700, 1500);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, 2, 61, 0, Math.PI * 2 * Math.min(1, phase * 1.8));
-    ctx.strokeStyle = `${medal.accent}75`;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = medal.accent;
-    ctx.textAlign = 'center';
-    ctx.font = `900 ${medal.code.length > 2 ? 38 : 53}px system-ui, sans-serif`;
-    ctx.fillText(medal.code, 0, 20);
-    ctx.restore();
-
-    ctx.globalAlpha = Math.min(1, Math.max(0, (phase - 0.18) * 3));
-    ctx.textAlign = 'center';
-    ctx.fillStyle = medal.accent;
-    ctx.font = '800 11px system-ui, sans-serif';
-    ctx.fillText('CONQUISTA DESBLOQUEADA', 300, 395);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '800 30px system-ui, sans-serif';
-    ctx.fillText(medal.label, 300, 435);
-    ctx.fillStyle = 'rgba(255,255,255,.65)';
-    ctx.font = '600 17px system-ui, sans-serif';
-    ctx.fillText(userName, 300, 466);
-    ctx.fillStyle = 'rgba(255,255,255,.42)';
-    ctx.font = '400 13px system-ui, sans-serif';
-    ctx.fillText(medal.description, 300, 492);
-
-    const cards = [
-      ['SESSÕES', stats.sessions.toString()],
-      ['MÉDIA', `${stats.average}/100`],
-      ['RECORDE', `${stats.best}/100`],
-      ['SEQUÊNCIA', `${stats.streak} dias`],
-    ];
-    cards.forEach(([label, value], index) => {
-      const x = 40 + (index % 2) * 265;
-      const y = 535 + Math.floor(index / 2) * 82;
-      ctx.fillStyle = 'rgba(255,255,255,.045)';
-      ctx.strokeStyle = 'rgba(255,255,255,.1)';
-      ctx.beginPath();
-      ctx.roundRect(x, y, 245, 66, 12);
-      ctx.fill();
-      ctx.stroke();
-      ctx.textAlign = 'left';
-      ctx.fillStyle = 'rgba(255,255,255,.4)';
-      ctx.font = '700 8px system-ui, sans-serif';
-      ctx.fillText(label, x + 15, y + 21);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '800 18px system-ui, sans-serif';
-      ctx.fillText(value, x + 15, y + 47);
-    });
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,.3)';
-    ctx.font = '500 10px system-ui, sans-serif';
-    ctx.fillText(`Emitida em ${new Date().toLocaleDateString('pt-BR')} • Speek It`, 300, 720);
-    ctx.globalAlpha = 1;
-
-    const rgba = ctx.getImageData(0, 0, width, height).data;
-    const palette = quantize(rgba, 64);
-    const index = applyPalette(rgba, palette);
-    gif.writeFrame(index, width, height, { palette, delay: 120, repeat: 0 });
   }
 
-  gif.finish();
-  return new Blob([gif.bytes()], { type: 'image/gif' });
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#00E7FF';
+  ctx.font = '800 44px system-ui, sans-serif';
+  ctx.fillText('SPEEK IT.', 80, 100);
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.font = '600 18px system-ui, sans-serif';
+  ctx.fillText('SUA VOZ EM MOVIMENTO', 82, 140);
+
+  ctx.save();
+  ctx.translate(600, 470);
+  ctx.shadowColor = medal.accent;
+  ctx.shadowBlur = 42;
+  ctx.beginPath();
+  ctx.moveTo(0, -190);
+  ctx.lineTo(175, -115);
+  ctx.lineTo(175, 45);
+  ctx.quadraticCurveTo(175, 175, 0, 245);
+  ctx.quadraticCurveTo(-175, 175, -175, 45);
+  ctx.lineTo(-175, -115);
+  ctx.closePath();
+  const shield = ctx.createLinearGradient(-180, -180, 180, 240);
+  shield.addColorStop(0, `${medal.accent}70`);
+  shield.addColorStop(1, '#061116');
+  ctx.fillStyle = shield;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = medal.accent;
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 5, 112, 0, Math.PI * 2);
+  ctx.strokeStyle = `${medal.accent}55`;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = medal.accent;
+  ctx.textAlign = 'center';
+  ctx.font = `900 ${medal.code.length > 2 ? 68 : 98}px system-ui, sans-serif`;
+  ctx.fillText(medal.code, 0, 36);
+  ctx.restore();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = medal.accent;
+  ctx.font = '800 20px system-ui, sans-serif';
+  ctx.fillText('CONQUISTA DESBLOQUEADA', 600, 785);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '800 58px system-ui, sans-serif';
+  ctx.fillText(medal.label, 600, 865);
+  ctx.fillStyle = medal.accent;
+  ctx.font = '700 30px system-ui, sans-serif';
+  ctx.fillText(userName, 600, 920);
+  ctx.fillStyle = 'rgba(255,255,255,.58)';
+  ctx.font = '400 27px system-ui, sans-serif';
+  ctx.fillText(medal.description, 600, 970);
+
+  const cards = [
+    ['SESSÕES', stats.sessions.toString()],
+    ['MÉDIA', `${stats.average}/100`],
+    ['RECORDE', `${stats.best}/100`],
+    ['SEQUÊNCIA', `${stats.streak} dias`],
+  ];
+  cards.forEach(([label, value], index) => {
+    const x = 80 + (index % 2) * 530;
+    const y = 1060 + Math.floor(index / 2) * 155;
+    ctx.fillStyle = 'rgba(255,255,255,.045)';
+    ctx.strokeStyle = 'rgba(255,255,255,.1)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, 490, 125, 24);
+    ctx.fill();
+    ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,.42)';
+    ctx.font = '700 16px system-ui, sans-serif';
+    ctx.fillText(label, x + 28, y + 40);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '800 34px system-ui, sans-serif';
+    ctx.fillText(value, x + 28, y + 87);
+  });
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,.34)';
+  ctx.font = '500 18px system-ui, sans-serif';
+  ctx.fillText(`Emitida em ${new Date().toLocaleDateString('pt-BR')} • Speek It`, 600, 1435);
+
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Falha ao gerar PNG'))), 'image/png')
+  );
 }
 
 // Pure SVG line chart — no external libs needed
@@ -557,14 +530,14 @@ export default function Dashboard({ evaluations, onGoTrain, userName }: Props) {
   const shareAchievement = async (medal: Medal) => {
     setIsSharing(true);
     try {
-      const blob = await createAchievementGif(medal, userName, {
+      const blob = await createAchievementPng(medal, userName, {
         sessions: totalSessions,
         average: avgScore,
         best: bestScore,
         streak,
       });
-      const filename = `speek-it-conquista-${medal.id}.gif`;
-      const file = new File([blob], filename, { type: 'image/gif' });
+      const filename = `speek-it-conquista-${medal.id}.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
       setIsSharing(false);
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
@@ -770,8 +743,9 @@ export default function Dashboard({ evaluations, onGoTrain, userName }: Props) {
                   className={`group flex min-h-28 flex-col items-center justify-center rounded-2xl border p-2 transition-all ${
                     medal.earned
                       ? 'cursor-pointer border-white/10 bg-white/[0.035] hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-cyan-400/[0.04]'
-                      : 'cursor-not-allowed border-white/5 bg-white/[0.015] opacity-45'
+                      : 'cursor-not-allowed border-white/5 bg-white/[0.015] opacity-60'
                   }`}
+                  style={!medal.earned ? { borderBottomColor: `${medal.accent}55` } : undefined}
                 >
                   <AchievementBadge medal={medal} />
                   <span className="mt-2 line-clamp-2 text-center text-[9px] font-bold leading-3 text-white/55">
@@ -867,10 +841,10 @@ export default function Dashboard({ evaluations, onGoTrain, userName }: Props) {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3.5 text-sm font-black text-[#021014] transition hover:bg-cyan-300 disabled:opacity-60"
                 >
                   <Share2 className="h-4 w-4" />
-                  {isSharing ? 'Criando animação...' : 'Compartilhar conquista em GIF'}
+                  {isSharing ? 'Preparando imagem...' : 'Compartilhar conquista em PNG'}
                 </button>
                 <p className="mt-2 text-center text-[10px] text-white/30">
-                  GIF vertical animado, pronto para redes sociais.
+                  PNG vertical 1200 × 1500, pronto para redes sociais.
                 </p>
               </div>
             </div>
