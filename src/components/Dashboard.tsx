@@ -565,6 +565,7 @@ export default function Dashboard({ evaluations, onGoTrain, userName }: Props) {
       });
       const filename = `speek-it-conquista-${medal.id}.gif`;
       const file = new File([blob], filename, { type: 'image/gif' });
+      setIsSharing(false);
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
@@ -578,6 +579,10 @@ export default function Dashboard({ evaluations, onGoTrain, userName }: Props) {
         link.download = filename;
         link.click();
         URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        console.error('Não foi possível compartilhar a conquista:', error);
       }
     } finally {
       setIsSharing(false);
