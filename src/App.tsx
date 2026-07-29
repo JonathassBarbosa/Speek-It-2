@@ -186,7 +186,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#030608] text-[#e9fbfd] font-sans overflow-x-hidden flex flex-col relative selection:bg-[#00E7FF]/25 selection:text-white">
+    <div className="h-[100dvh] bg-[#030608] text-[#e9fbfd] font-sans overflow-hidden flex flex-col relative selection:bg-[#00E7FF]/25 selection:text-white">
       {/* Dynamic Glow Spots for Immersive Aesthetic */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/15 rounded-full blur-[140px]"></div>
@@ -216,7 +216,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex overflow-hidden z-10 relative pb-[78px] lg:pb-0">
+      <main className="min-h-0 flex-1 flex overflow-hidden z-10 relative pb-[78px] lg:pb-0">
 
         {/* TAB 1: TRAINING & TELEPROMPTER */}
         {activeTab === 'train' && (

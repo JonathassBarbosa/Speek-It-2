@@ -61,7 +61,7 @@ export default function TeleprompterMonitor({
   onToggleVideoMode,
 }: TeleprompterMonitorProps) {
   return (
-    <section className="order-2 flex-1 flex flex-col bg-[#030608] lg:border-r border-white/[0.07] relative min-h-[560px] lg:min-h-0">
+    <section className="order-2 flex-1 flex flex-col overflow-hidden bg-[#030608] lg:border-r border-white/[0.07] relative min-h-[560px] lg:min-h-0">
 
       {selectedText ? (
         <>
@@ -120,7 +120,7 @@ export default function TeleprompterMonitor({
           {/* Teleprompter Text Display Container */}
           <div
             ref={teleprompterContainerRef}
-            className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-12 xl:px-16 py-14 sm:py-20 md:py-28 space-y-6 scroll-smooth select-none relative"
+            className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 md:px-12 xl:px-16 py-14 sm:py-20 md:py-28 space-y-6 scroll-smooth select-none relative"
             style={{
               scrollbarWidth: 'none',
               maskImage: 'linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)',
