@@ -73,6 +73,7 @@ export default function App() {
     normalizedTargetWords: wordTracking.normalizedTargetWords,
     spokenUpToRef: wordTracking.spokenUpToRef,
     setSpokenUpTo: wordTracking.setSpokenUpTo,
+    setWordResult: wordTracking.setWordResult,
     resetWordTracking: wordTracking.resetTracking,
     onStart: handleRecordingStart,
     onStop: () => teleprompter.setIsPlaying(false),
@@ -225,6 +226,7 @@ export default function App() {
             onSelectText={handleSelectText}
             textTokens={wordTracking.textTokens}
             spokenUpTo={wordTracking.spokenUpTo}
+            wordResults={wordTracking.wordResults}
             wordElRefs={wordTracking.wordElRefs}
             teleprompterContainerRef={teleprompter.teleprompterContainerRef}
             fontSize={teleprompter.fontSize}

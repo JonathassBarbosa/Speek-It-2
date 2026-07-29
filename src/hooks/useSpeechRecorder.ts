@@ -5,6 +5,7 @@
 
 import { MutableRefObject, useEffect, useRef, useState } from 'react';
 import { normalizeWord } from '../lib/speechAnalysis';
+import type { WordResult } from './useWordTracking';
 
 interface UseSpeechRecorderParams {
   isRecording: boolean;
@@ -12,6 +13,7 @@ interface UseSpeechRecorderParams {
   normalizedTargetWords: string[];
   spokenUpToRef: MutableRefObject<number>;
   setSpokenUpTo: (idx: number) => void;
+  setWordResult: (idx: number, result: WordResult) => void;
   resetWordTracking: () => void;
   // Called synchronously right before a new take starts recording — resets
   // teleprompter position/timer, evaluation panel and history selection.
@@ -33,6 +35,7 @@ export function useSpeechRecorder({
   normalizedTargetWords,
   spokenUpToRef,
   setSpokenUpTo,
+  setWordResult,
   resetWordTracking,
   onStart,
   onStop,
@@ -56,6 +59,33 @@ export function useSpeechRecorder({
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+
+  const wordsMatch = (spoken: string, target: string) => {
+    if (spoken === target) return true;
+    if (spoken.length < 4 || target.length < 4) return false;
+
+    const rows = target.length + 1;
+    const columns = spoken.length + 1;
+    const distances = Array.from({ length: rows }, (_, row) =>
+      Array.from({ length: columns }, (_, column) => (
+        row === 0 ? column : column === 0 ? row : 0
+      ))
+    );
+
+    for (let row = 1; row < rows; row++) {
+      for (let column = 1; column < columns; column++) {
+        distances[row][column] = Math.min(
+          distances[row - 1][column] + 1,
+          distances[row][column - 1] + 1,
+          distances[row - 1][column - 1] + (
+            target[row - 1] === spoken[column - 1] ? 0 : 1
+          )
+        );
+      }
+    }
+
+    return distances[target.length][spoken.length] <= 1;
+  };
 
   // Request Microphone permissions upfront — runs only once on mount
   useEffect(() => {
@@ -207,21 +237,30 @@ export function useSpeechRecorder({
               let pos = spokenUpToRef.current + 1;
 
               for (const spoken of spokenWords) {
-                const searchEnd = Math.min(pos + 10, normalizedTargetWords.length);
+                if (pos >= normalizedTargetWords.length) break;
+
+                const searchEnd = Math.min(pos + 5, normalizedTargetWords.length);
+                let matchedIndex = -1;
                 for (let j = pos; j < searchEnd; j++) {
-                  const target = normalizedTargetWords[j];
-                  // Accept if at least 3 chars match at start (handles contractions, etc.)
-                  const matchLen = Math.min(3, Math.min(spoken.length, target.length));
-                  if (
-                    target === spoken ||
-                    (matchLen >= 3 && target.startsWith(spoken.slice(0, matchLen))) ||
-                    (matchLen >= 3 && spoken.startsWith(target.slice(0, matchLen)))
-                  ) {
-                    pos = j + 1;
-                    spokenUpToRef.current = j;
-                    setSpokenUpTo(j);
+                  if (wordsMatch(spoken, normalizedTargetWords[j])) {
+                    matchedIndex = j;
                     break;
                   }
+                }
+
+                if (matchedIndex >= 0) {
+                  for (let skipped = pos; skipped < matchedIndex; skipped++) {
+                    setWordResult(skipped, 'incorrect');
+                  }
+                  setWordResult(matchedIndex, 'correct');
+                  pos = matchedIndex + 1;
+                  spokenUpToRef.current = matchedIndex;
+                  setSpokenUpTo(matchedIndex);
+                } else {
+                  setWordResult(pos, 'incorrect');
+                  spokenUpToRef.current = pos;
+                  setSpokenUpTo(pos);
+                  pos += 1;
                 }
               }
             }

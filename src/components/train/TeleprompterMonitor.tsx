@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { TextTemplate } from '../../types';
 import { formatTimer } from '../../lib/format';
+import type { WordResult } from '../../hooks/useWordTracking';
 
 type TextToken = { text: string; isWord: boolean; wordIdx: number | null };
 
@@ -16,6 +17,7 @@ interface TeleprompterMonitorProps {
   selectedText: TextTemplate | null;
   textTokens: TextToken[];
   spokenUpTo: number;
+  wordResults: Record<number, WordResult>;
   wordElRefs: MutableRefObject<Map<number, HTMLSpanElement>>;
   teleprompterContainerRef: RefObject<HTMLDivElement>;
   fontSize: number;
@@ -39,6 +41,7 @@ export default function TeleprompterMonitor({
   selectedText,
   textTokens,
   spokenUpTo,
+  wordResults,
   wordElRefs,
   teleprompterContainerRef,
   fontSize,
@@ -68,6 +71,17 @@ export default function TeleprompterMonitor({
               <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#00E7FF]"></span>
               <span className="text-xs font-semibold text-white/90 truncate max-w-xs md:max-w-md">
                 {selectedText.title}
+              </span>
+            </div>
+            <div className="hidden xl:flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider">
+              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" /> Correta
+              </span>
+              <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
+                <span className="h-2 w-2 rounded-full bg-rose-400" /> Revisar
+              </span>
+              <span className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
+                <span className="h-2 w-2 rounded-full bg-cyan-400" /> Próxima
               </span>
             </div>
             <div className="flex items-center gap-3 text-xs text-white/50">
@@ -107,10 +121,15 @@ export default function TeleprompterMonitor({
           <div
             ref={teleprompterContainerRef}
             className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-12 xl:px-16 py-14 sm:py-20 md:py-28 space-y-6 scroll-smooth select-none relative"
-            style={{ scrollbarWidth: 'none' }}
+            style={{
+              scrollbarWidth: 'none',
+              maskImage: 'linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)',
+            }}
           >
-            {/* Generous Padding top/bottom to allow scrolling past text end */}
-            <div className="max-w-3xl mx-auto py-4 md:py-12 transition-all duration-300">
+            {/* Entry/exit space makes the copy travel through the focus line like a teleprompter. */}
+            <div aria-hidden="true" className="h-[25vh] lg:h-[30vh]" />
+            <div className="max-w-3xl mx-auto py-4 md:py-8 transition-all duration-300">
               <p
                 className="font-bold leading-relaxed tracking-wide text-center select-none"
                 style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}
@@ -120,8 +139,8 @@ export default function TeleprompterMonitor({
                     return <span key={i}>{token.text}</span>;
                   }
                   const wIdx = token.wordIdx!;
-                  const isSpoken = wIdx < spokenUpTo;
-                  const isCurrent = wIdx === spokenUpTo;
+                  const result = wordResults[wIdx];
+                  const isCurrent = wIdx === spokenUpTo + 1;
                   return (
                     <span
                       key={i}
@@ -129,12 +148,15 @@ export default function TeleprompterMonitor({
                         if (el) wordElRefs.current.set(wIdx, el);
                         else wordElRefs.current.delete(wIdx);
                       }}
-                      className={`transition-colors duration-100 rounded-sm ${
-                        isCurrent
-                          ? 'bg-blue-400/20 text-white shadow-[0_0_16px_rgba(0,231,255,0.08)]'
-                          : isSpoken
-                          ? 'text-white/30'
-                          : 'text-[#f3f4f6]'
+                      data-word-result={result || (isCurrent ? 'current' : 'pending')}
+                      className={`transition-all duration-150 rounded px-0.5 ${
+                        result === 'correct'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/12 dark:text-emerald-300'
+                          : result === 'incorrect'
+                          ? 'bg-rose-100 text-rose-700 decoration-rose-500/70 dark:bg-rose-500/15 dark:text-rose-300 dark:decoration-rose-400/70 underline decoration-2 underline-offset-4'
+                          : isCurrent
+                          ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-400/20 dark:text-cyan-200 shadow-[0_0_16px_rgba(0,231,255,0.12)]'
+                          : 'text-slate-800 dark:text-[#f3f4f6]'
                       }`}
                     >
                       {token.text}
@@ -143,6 +165,7 @@ export default function TeleprompterMonitor({
                 })}
               </p>
             </div>
+            <div aria-hidden="true" className="h-[42vh] lg:h-[48vh]" />
           </div>
 
           {/* Progress Glow Bar */}

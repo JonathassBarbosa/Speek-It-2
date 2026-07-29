@@ -8,6 +8,7 @@ import { TextTemplate, SpeechEvaluation } from '../../types';
 import ScriptSidebar from './ScriptSidebar';
 import TeleprompterMonitor from './TeleprompterMonitor';
 import AnalysisPanel from './AnalysisPanel';
+import type { WordResult } from '../../hooks/useWordTracking';
 
 type TextToken = { text: string; isWord: boolean; wordIdx: number | null };
 
@@ -18,6 +19,7 @@ interface TrainingTabProps {
 
   textTokens: TextToken[];
   spokenUpTo: number;
+  wordResults: Record<number, WordResult>;
   wordElRefs: MutableRefObject<Map<number, HTMLSpanElement>>;
   teleprompterContainerRef: RefObject<HTMLDivElement>;
   fontSize: number;
@@ -50,6 +52,7 @@ export default function TrainingTab({
   onSelectText,
   textTokens,
   spokenUpTo,
+  wordResults,
   wordElRefs,
   teleprompterContainerRef,
   fontSize,
@@ -82,6 +85,7 @@ export default function TrainingTab({
         selectedText={selectedText}
         textTokens={textTokens}
         spokenUpTo={spokenUpTo}
+        wordResults={wordResults}
         wordElRefs={wordElRefs}
         teleprompterContainerRef={teleprompterContainerRef}
         fontSize={fontSize}

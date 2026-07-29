@@ -7,6 +7,8 @@ import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { TextTemplate } from '../types';
 import { normalizeWord } from '../lib/speechAnalysis';
 
+export type WordResult = 'correct' | 'incorrect';
+
 // Tokenizes the selected script and tracks which word has been spoken so far,
 // auto-scrolling the teleprompter to keep the current word in view while recording.
 export function useWordTracking(
@@ -15,6 +17,7 @@ export function useWordTracking(
   teleprompterContainerRef: RefObject<HTMLDivElement>
 ) {
   const [spokenUpTo, setSpokenUpTo] = useState(-1);
+  const [wordResults, setWordResults] = useState<Record<number, WordResult>>({});
   const spokenUpToRef = useRef(-1);
   const wordElRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
 
@@ -36,8 +39,15 @@ export function useWordTracking(
 
   const resetTracking = useCallback(() => {
     setSpokenUpTo(-1);
+    setWordResults({});
     spokenUpToRef.current = -1;
     wordElRefs.current.clear();
+  }, []);
+
+  const setWordResult = useCallback((wordIdx: number, result: WordResult) => {
+    setWordResults((current) => (
+      current[wordIdx] === result ? current : { ...current, [wordIdx]: result }
+    ));
   }, []);
 
   // Reset word position when text changes
@@ -69,6 +79,8 @@ export function useWordTracking(
     normalizedTargetWords,
     spokenUpTo,
     setSpokenUpTo,
+    wordResults,
+    setWordResult,
     spokenUpToRef,
     wordElRefs,
     resetTracking,
