@@ -23,6 +23,7 @@ import LoginPage from './components/LoginPage';
 import AdminDashboard from './components/AdminDashboard';
 import AppIntro from './components/brand/AppIntro';
 import BrandLockup from './components/brand/BrandLockup';
+import { VocalCoachChat } from './components/VocalCoachChat';
 
 export default function App() {
   const [showBrandIntro, setShowBrandIntro] = useState(
@@ -255,26 +256,11 @@ export default function App() {
 
         {/* TAB 2: INTERACTIVE AI VOCAL COACH */}
         {activeTab === 'coach' && (
-          <div className="flex-1 grid place-items-center p-6">
-            <div className="max-w-md rounded-3xl border border-[#00E7FF]/15 bg-[#071014]/90 p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
-              <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-[#00E7FF]/20 bg-[#00E7FF]/10 text-[#00E7FF]">
-                <span className="text-2xl">✦</span>
-              </div>
-              <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.24em] text-[#00E7FF]/70">
-                Em aprimoramento
-              </p>
-              <h2 className="mt-2 font-display text-2xl font-semibold text-white">Coach IA em standby</h2>
-              <p className="mt-3 text-sm leading-6 text-white/50">
-                Estamos preparando uma experiência vocal mais natural e precisa. Enquanto isso, todos os recursos de treinamento continuam disponíveis.
-              </p>
-              <button
-                type="button"
-                onClick={() => setActiveTab('train')}
-                className="mt-6 rounded-xl bg-[#00E7FF] px-5 py-3 text-xs font-bold text-[#021014] transition hover:brightness-110"
-              >
-                Voltar ao treinamento
-              </button>
-            </div>
+          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-8">
+            <VocalCoachChat
+              sessionId={user?.id ?? 'sessao-local'}
+              initialMessage="Olá! Eu sou seu Coach Speek It. Envie uma frase em inglês por texto ou voz. Vou orientar sua pronúncia em português do Brasil, com exercícios curtos e objetivos."
+            />
           </div>
         )}
 

@@ -3,6 +3,23 @@
 Arquivo para importação:
 
 - `speek-it-unified-vocal-coach.json`
+- `speek-it-coach-local.json` — versão recomendada sem cobrança por chamada
+
+## Coach no nível gratuito
+
+O arquivo `speek-it-coach-local.json` usa:
+
+- Gemini Flash no nível gratuito;
+- transcrição de voz feita pelo navegador;
+- voz em português do Brasil fornecida pelo aparelho do usuário;
+- credencial protegida pelo cofre do n8n;
+- nenhuma cobrança por chamada dentro dos limites gratuitos.
+
+A URL de produção termina em:
+
+```text
+/webhook/speek-it-coach-local
+```
 
 ## Importar
 

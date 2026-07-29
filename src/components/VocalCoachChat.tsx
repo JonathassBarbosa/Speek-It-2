@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Mic, Square, Send, Volume2, Sparkles, User, Bot, Loader2, AlertCircle } from 'lucide-react';
 
 export interface PhoneticTip {
@@ -47,27 +47,52 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef('');
+  const shouldSendTranscriptRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  const stopMediaStream = () => {
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    mediaStreamRef.current = null;
-  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  useEffect(() => () => stopMediaStream(), []);
+  useEffect(() => () => {
+    try {
+      recognitionRef.current?.abort();
+    } catch {
+      // O reconhecimento já pode ter sido encerrado pelo navegador.
+    }
+    window.speechSynthesis?.cancel();
+  }, []);
+
+  const speakCoachText = useCallback((text: string) => {
+    if (!('speechSynthesis' in window)) {
+      setError('A leitura em voz alta não está disponível neste navegador.');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const portugueseVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith('pt-br'));
+    const preferredTerms = ['premium', 'enhanced', 'natural', 'google', 'luciana', 'francisca'];
+    utterance.voice =
+      portugueseVoices.find((voice) =>
+        preferredTerms.some((term) => voice.name.toLowerCase().includes(term)),
+      ) ?? portugueseVoices[0] ?? voices.find((voice) => voice.lang.toLowerCase().startsWith('pt')) ?? null;
+    utterance.lang = 'pt-BR';
+    utterance.rate = 0.93;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  }, []);
 
   // Enviar mensagem para a API unificada do n8n
   const sendToN8n = async (payload: { text?: string; audioBlob?: Blob }) => {
-    const apiUrl = import.meta.env.VITE_N8N_API_URL?.trim();
+    const apiUrl =
+      import.meta.env.VITE_COACH_API_URL?.trim() ||
+      'https://n8n-65-109-163-218.nip.io/webhook/speek-it-coach-local';
     if (!apiUrl) {
-      setError('O Vocal Coach ainda não foi configurado. Defina VITE_N8N_API_URL no ambiente de publicação.');
+      setError('O Vocal Coach ainda não foi configurado.');
       return;
     }
 
@@ -130,12 +155,8 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
       if (coachAudioUrl) {
         const audio = new Audio(coachAudioUrl);
         audio.play().catch((err) => console.warn('Autoplay bloqueado pelo navegador:', err));
-      } else if ('speechSynthesis' in window && data.textResponse) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(data.textResponse);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 0.95;
-        window.speechSynthesis.speak(utterance);
+      } else if (data.textResponse) {
+        speakCoachText(data.textResponse);
       }
     } catch (error) {
       console.error('Erro na comunicação com o Coach:', error);
@@ -166,35 +187,71 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
     sendToN8n({ text: textToSend });
   };
 
+  const sendVoiceTranscript = () => {
+    const transcript = transcriptRef.current.trim();
+    if (!transcript) {
+      setError('Não consegui reconhecer sua fala. Tente novamente mais perto do microfone.');
+      return;
+    }
+
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      sender: 'user',
+      text: transcript,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setInputText('');
+    sendToN8n({ text: transcript });
+  };
+
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setError('Este navegador não oferece reconhecimento de voz. Use o campo de texto ou abra o app no Chrome, Safari ou Edge.');
+        return;
+      }
 
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      transcriptRef.current = '';
+      shouldSendTranscriptRef.current = false;
+      setInputText('');
+      setError(null);
+
+      recognition.onresult = (event: any) => {
+        let finalText = transcriptRef.current;
+        let interimText = '';
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          const part = event.results[index][0].transcript;
+          if (event.results[index].isFinal) finalText += `${part} `;
+          else interimText += part;
+        }
+        transcriptRef.current = finalText;
+        setInputText(`${finalText}${interimText}`.trim());
+      };
+
+      recognition.onerror = (event: any) => {
+        if (event.error !== 'aborted' && event.error !== 'no-speech') {
+          setError('Não foi possível reconhecer sua fala. Confira a permissão do microfone.');
         }
       };
 
-      mediaRecorderRef.current.onstop = () => {
-        stopMediaStream();
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: mediaRecorderRef.current?.mimeType || 'audio/webm',
-        });
-        const userMsg: ChatMessage = {
-          id: Date.now().toString(),
-          sender: 'user',
-          text: '🎤 Áudio enviado para análise',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, userMsg]);
-        sendToN8n({ audioBlob });
+      recognition.onend = () => {
+        recognitionRef.current = null;
+        setIsRecording(false);
+        if (shouldSendTranscriptRef.current) {
+          shouldSendTranscriptRef.current = false;
+          sendVoiceTranscript();
+        }
       };
 
-      mediaRecorderRef.current.start();
+      recognitionRef.current = recognition;
+      recognition.start();
       setIsRecording(true);
     } catch (err) {
       console.error('Erro ao acessar microfone:', err);
@@ -204,10 +261,9 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
+    if (!recognitionRef.current || !isRecording) return;
+    shouldSendTranscriptRef.current = true;
+    recognitionRef.current.stop();
   };
 
   return (
@@ -257,13 +313,13 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
               <p>{msg.text}</p>
 
               {/* Botão de Áudio da Resposta */}
-              {msg.audioUrl && (
+              {msg.sender === 'coach' && (
                 <button
-                  onClick={() => new Audio(msg.audioUrl).play()}
+                  onClick={() => msg.audioUrl ? new Audio(msg.audioUrl).play() : speakCoachText(msg.text)}
                   className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/40 text-violet-300 rounded-lg text-xs transition-all"
                 >
                   <Volume2 className="w-3.5 h-3.5" />
-                  Ouvir Pronúncia do Coach
+                  Ouvir resposta
                 </button>
               )}
 

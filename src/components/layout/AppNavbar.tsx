@@ -42,7 +42,7 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   { id: 'train', label: 'Treinamento', mobileLabel: 'Treinar', icon: Mic2 },
-  { id: 'coach', label: 'Coach IA', mobileLabel: 'Coach', icon: Sparkles, disabled: true },
+  { id: 'coach', label: 'Coach IA', mobileLabel: 'Coach', icon: Sparkles },
   { id: 'library', label: 'Meus roteiros', mobileLabel: 'Roteiros', icon: LibraryBig },
   { id: 'history', label: 'Histórico', mobileLabel: 'Histórico', icon: History },
   { id: 'dashboard', label: 'Evolução', mobileLabel: 'Evolução', icon: ChartNoAxesCombined },
