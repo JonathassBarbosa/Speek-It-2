@@ -50,6 +50,7 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordingStartedAtRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -212,6 +213,7 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
       };
 
       recorder.onstop = () => {
+        const recordingDuration = Date.now() - recordingStartedAtRef.current;
         const audioBlob = new Blob(audioChunksRef.current, {
           type: recorder.mimeType || 'audio/webm',
         });
@@ -219,8 +221,8 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
         mediaStreamRef.current = null;
         mediaRecorderRef.current = null;
 
-        if (audioBlob.size < 1000) {
-          setError('O áudio ficou muito curto. Grave novamente e fale por alguns segundos.');
+        if (recordingDuration < 1800 || audioBlob.size < 3000) {
+          setError('A gravação ficou muito curta. Fale por pelo menos dois segundos antes de enviar.');
           return;
         }
 
@@ -235,6 +237,7 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
       };
 
       mediaRecorderRef.current = recorder;
+      recordingStartedAtRef.current = Date.now();
       recorder.start();
       setIsRecording(true);
     } catch (err) {
