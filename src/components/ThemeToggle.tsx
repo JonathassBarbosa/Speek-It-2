@@ -12,19 +12,16 @@ interface ThemeToggleProps {
 
 export default function ThemeToggle({ darkMode, setDarkMode }: ThemeToggleProps) {
   const toggleTheme = () => {
-    const nextMode = !darkMode;
-    setDarkMode(nextMode);
-    if (nextMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    setDarkMode(!darkMode);
   };
 
   return (
     <button
       id="theme-toggle-btn"
+      type="button"
       onClick={toggleTheme}
+      aria-label={darkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
+      aria-pressed={!darkMode}
       className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-all cursor-pointer shadow-sm flex items-center justify-center"
       title={darkMode ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
     >

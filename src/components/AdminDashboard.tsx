@@ -5,7 +5,17 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Users, TrendingUp, Mic, Clock, RefreshCw, Award, ArrowLeft } from 'lucide-react';
+import {
+  Users,
+  TrendingUp,
+  Mic,
+  RefreshCw,
+  Award,
+  ArrowLeft,
+  Database,
+  RotateCcw,
+  ShieldCheck,
+} from 'lucide-react';
 
 interface UserStat {
   id: string;
@@ -27,6 +37,15 @@ interface AdminStats {
   userStats: UserStat[];
 }
 
+interface BackupSummary {
+  id: string;
+  createdAt: number;
+  createdBy: string;
+  schemaVersion: number;
+  userCount: number;
+  evaluationCount: number;
+}
+
 interface Props {
   onBack: () => void;
 }
@@ -37,6 +56,8 @@ export default function AdminDashboard({ onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const [backups, setBackups] = useState<BackupSummary[]>([]);
+  const [backupLoading, setBackupLoading] = useState(false);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -55,8 +76,60 @@ export default function AdminDashboard({ onBack }: Props) {
     }
   };
 
+  const fetchBackups = async () => {
+    try {
+      const res = await fetch('/api/admin/backups', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Falha ao carregar backups.');
+      const data = await res.json();
+      setBackups(data.backups ?? []);
+    } catch (err: any) {
+      setError(err.message || 'Não foi possível carregar os backups.');
+    }
+  };
+
+  const createBackup = async () => {
+    setBackupLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/backups', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Falha ao criar o backup.');
+      await fetchBackups();
+    } catch (err: any) {
+      setError(err.message || 'Não foi possível criar o backup.');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const restoreBackup = async (backup: BackupSummary) => {
+    const date = new Date(backup.createdAt).toLocaleString('pt-BR');
+    if (!window.confirm(`Restaurar o backup de ${date}? Um snapshot do estado atual será criado antes da restauração.`)) {
+      return;
+    }
+
+    setBackupLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/backups/${encodeURIComponent(backup.id)}/restore`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Falha ao restaurar o backup.');
+      await Promise.all([fetchBackups(), fetchStats()]);
+    } catch (err: any) {
+      setError(err.message || 'Não foi possível restaurar o backup.');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchStats();
+    Promise.all([fetchStats(), fetchBackups()]);
   }, [lastRefresh]);
 
   const formatDate = (ts: number | null) => {
@@ -162,6 +235,62 @@ export default function AdminDashboard({ onBack }: Props) {
                 <p className="text-[10px] text-white/30 mt-1">treinos / usuário</p>
               </div>
             </div>
+
+            {/* Backups */}
+            <section className="rounded-2xl border border-white/5 bg-[#09090d] overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 p-5">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl border border-[#00E7FF]/20 bg-[#00E7FF]/10 p-2.5">
+                    <Database className="h-4 w-4 text-[#00E7FF]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">Backup e restauração</h3>
+                    <p className="mt-0.5 text-[11px] text-white/35">
+                      Até 14 snapshots criptograficamente identificados no Redis.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={createBackup}
+                  disabled={backupLoading}
+                  className="flex items-center gap-2 rounded-xl border border-[#00E7FF]/25 bg-[#00E7FF]/10 px-4 py-2 text-xs font-bold text-[#7DF5FF] transition-colors hover:bg-[#00E7FF]/15 disabled:opacity-50"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  {backupLoading ? 'Processando...' : 'Criar backup agora'}
+                </button>
+              </div>
+
+              {backups.length === 0 ? (
+                <div className="px-5 py-8 text-center text-xs text-white/30">
+                  Nenhum backup criado. Gere o primeiro snapshot antes de liberar novos usuários.
+                </div>
+              ) : (
+                <div className="divide-y divide-white/5">
+                  {backups.slice(0, 5).map((backup) => (
+                    <div key={backup.id} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {new Date(backup.createdAt).toLocaleString('pt-BR')}
+                        </p>
+                        <p className="mt-1 text-[11px] text-white/35">
+                          {backup.userCount} usuários · {backup.evaluationCount} avaliações
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => restoreBackup(backup)}
+                        disabled={backupLoading}
+                        className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Restaurar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
 
             {/* Users table */}
             <div className="bg-[#09090d] rounded-2xl border border-white/5 overflow-hidden">

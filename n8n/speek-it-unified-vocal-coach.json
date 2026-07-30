@@ -1,0 +1,505 @@
+{
+  "name": "Speek-It 2 - Unified AI Vocal Coach API",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Configuração obrigatória\n1. Abra cada nó OpenAI com alerta vermelho e selecione a mesma credencial OpenAI.\n2. Salve o workflow e clique em **Publish/Active**.\n3. No nó Webhook, copie a **Production URL** (não a Test URL).\n4. A URL final deve usar HTTPS e terminar em `/webhook/speek-it-api`.",
+        "height": 220,
+        "width": 420,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-520, -260],
+      "id": "setup-note",
+      "name": "LEIA PRIMEIRO"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "speek-it-api",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-440, 160],
+      "id": "webhook-entry",
+      "name": "Webhook API Entry",
+      "webhookId": "speek-it-api"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "evaluate-condition",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "evaluate",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "evaluate"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "chat-condition",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "chat"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [-200, 160],
+      "id": "action-router",
+      "name": "Route Action"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://speek-it-whisper:9000/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer speek-it-local-whisper"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "audio"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, -100],
+      "id": "transcribe-evaluation",
+      "name": "OpenAI - Transcribe Evaluation"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Texto alvo esperado:\n{{ $('Webhook API Entry').item.json.body.promptText }}\n\nTranscrição realizada pelo aluno:\n{{ $json.text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Você é um especialista em fonética e pronúncia de inglês para brasileiros. Compare a transcrição com o texto alvo. Responda SOMENTE com JSON válido, sem markdown, usando exatamente este formato: {\"scoreFluency\":85,\"scorePronunciation\":78,\"scoreGrammar\":90,\"generalFeedback\":\"Resumo breve e encorajador em português.\",\"criticalWords\":[{\"word\":\"comfortable\",\"ipa\":\"/ˈkʌm.fɚ.t̬ə.bəl/\",\"tip\":\"Dica articulatória curta em português.\"}],\"initialCoachGreeting\":\"Saudação curta convidando o aluno a praticar os principais ajustes.\"}. Use notas inteiras de 0 a 100. Não invente erros quando a transcrição estiver correta."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [300, -100],
+      "id": "evaluation-chain",
+      "name": "Evaluate Pronunciation"
+    },
+    {
+      "parameters": {
+        "modelName": "gpt-4o-mini",
+        "options": {
+          "responseFormat": "json_object",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [300, 60],
+      "id": "evaluation-model",
+      "name": "OpenAI Chat Model - Evaluation"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.text ?? $json.output ?? $json.response ?? '{}';\nconst cleaned = typeof raw === 'string' ? raw.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/i, '').trim() : raw;\nlet result;\ntry {\n  result = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (error) {\n  throw new Error(`A avaliação da OpenAI não retornou JSON válido: ${String(raw).slice(0, 300)}`);\n}\nreturn [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, -100],
+      "id": "parse-evaluation",
+      "name": "Parse Evaluation JSON"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [800, -100],
+      "id": "respond-evaluation",
+      "name": "Respond Evaluation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "audio-exists",
+              "leftValue": "={{ Boolean($binary?.audio) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [40, 300],
+      "id": "chat-audio-check",
+      "name": "Chat Has Audio?"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "binaryPropertyName": "audio",
+        "options": {
+          "language": "en"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [280, 220],
+      "id": "transcribe-chat",
+      "name": "OpenAI - Transcribe Chat"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chat-text-field",
+              "name": "text",
+              "value": "={{ $('Webhook API Entry').item.json.body.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [280, 380],
+      "id": "prepare-text-chat",
+      "name": "Prepare Text Chat"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://speek-it-ollama:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  model: 'qwen2.5:3b',\n  stream: false,\n  messages: [\n    {\n      role: 'system',\n      content: 'Você é o treinador de pronúncia do Speek-It: caloroso, paciente e prático. Atenda usuários brasileiros e responda sempre em português do Brasil. Use inglês somente nas palavras, frases e exemplos que o aluno deve praticar, sempre acompanhados de explicação em português. Dê instruções curtas sobre língua, lábios, mandíbula, respiração, sílaba tônica e ritmo. Evite termos técnicos sem explicação. Limite a resposta a 120 palavras e termine com um exercício concreto ou uma pergunta curta para continuar a prática.'\n    },\n    {\n      role: 'user',\n      content: $json.text\n    }\n  ]\n} }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [540, 300],
+      "id": "coach-chain",
+      "name": "Vocal Coach Response"
+    },
+    {
+      "parameters": {
+        "modelName": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.45
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [540, 480],
+      "id": "coach-model",
+      "name": "OpenAI Chat Model - Coach"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "textToSpeech",
+        "text": "={{ $json.text ?? $json.output ?? $json.response }}",
+        "options": {
+          "voice": "alloy"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [800, 300],
+      "id": "coach-tts",
+      "name": "OpenAI - Coach Voice"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  textResponse: $json.message?.content ?? 'Não consegui preparar a resposta agora.',\n  audioBase64: null,\n  timestamp: $now.toISO()\n} }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1040, 300],
+      "id": "respond-chat",
+      "name": "Respond Coach Chat"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"error\":\"Ação inválida. Use action=evaluate ou action=chat.\"}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [40, 560],
+      "id": "respond-invalid-action",
+      "name": "Respond Invalid Action"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook API Entry": {
+      "main": [
+        [
+          {
+            "node": "Route Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Action": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Transcribe Evaluation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chat Has Audio?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Invalid Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Transcribe Evaluation": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Pronunciation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model - Evaluation": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Evaluate Pronunciation",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Pronunciation": {
+      "main": [
+        [
+          {
+            "node": "Parse Evaluation JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Evaluation JSON": {
+      "main": [
+        [
+          {
+            "node": "Respond Evaluation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Has Audio?": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Transcribe Chat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Text Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Transcribe Chat": {
+      "main": [
+        [
+          {
+            "node": "Vocal Coach Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Text Chat": {
+      "main": [
+        [
+          {
+            "node": "Vocal Coach Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vocal Coach Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Coach Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "00000000-0000-4000-8000-000000000001",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

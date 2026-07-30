@@ -107,7 +107,7 @@ export default function TextBank({ texts, onSelectText, onSaveText, onDeleteText
   return (
     <div id="text-bank-container" className="space-y-6">
       {/* Header with Search and Create CTA */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold font-display text-gray-900 dark:text-white flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
@@ -121,7 +121,7 @@ export default function TextBank({ texts, onSelectText, onSaveText, onDeleteText
         <button
           id="btn-add-text"
           onClick={() => setIsAddingText(!isAddingText)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow cursor-pointer self-start md:self-auto"
+          className="flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2.5 bg-cyan-400 hover:bg-cyan-300 text-[#021014] text-sm font-bold rounded-xl transition-all shadow-lg shadow-cyan-400/10 cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           {isAddingText ? 'Ver Banco' : 'Novo Texto'}
@@ -244,7 +244,7 @@ export default function TextBank({ texts, onSelectText, onSaveText, onDeleteText
                   key={text.id}
                   id={`text-card-${text.id}`}
                   onClick={() => onSelectText(text)}
-                  className="group bg-white dark:bg-gray-900 hover:bg-gray-50/30 dark:hover:bg-gray-900/60 border border-gray-100 dark:border-gray-800/80 hover:border-indigo-200 dark:hover:border-indigo-900/40 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between h-[230px]"
+                  className="group bg-white dark:bg-[#071014] hover:bg-gray-50/30 dark:hover:bg-[#0a171c] border border-gray-100 dark:border-white/10 hover:border-cyan-300 dark:hover:border-cyan-400/40 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[230px]"
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
@@ -255,7 +255,7 @@ export default function TextBank({ texts, onSelectText, onSaveText, onDeleteText
                       <div className="flex items-center gap-1">
                         <button
                           onClick={(e) => toggleFavorite(text, e)}
-                          className="p-1 rounded-lg text-gray-400 hover:text-amber-500 dark:text-gray-600 dark:hover:text-amber-400 transition-colors"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-500 dark:text-gray-600 dark:hover:text-amber-400 transition-colors"
                           title={text.isFavorite ? 'Remover dos favoritos' : 'Favoritar'}
                         >
                           <Star className={`w-4 h-4 ${text.isFavorite ? 'fill-amber-400 text-amber-500' : ''}`} />
@@ -269,7 +269,7 @@ export default function TextBank({ texts, onSelectText, onSaveText, onDeleteText
                                 onDeleteText(text.id);
                               }
                             }}
-                            className="p-1 rounded-lg text-gray-400 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors"
                             title="Deletar texto"
                           >
                             <Trash2 className="w-4 h-4" />

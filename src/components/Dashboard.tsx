@@ -3,13 +3,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { SpeechEvaluation } from '../types';
-import { Award, TrendingUp, Clock, Zap, Target, Mic, Trophy } from 'lucide-react';
+import {
+  Award,
+  TrendingUp,
+  Clock,
+  Zap,
+  Target,
+  Mic,
+  Trophy,
+  Share2,
+  X,
+  LockKeyhole,
+  Check,
+} from 'lucide-react';
 
 interface Props {
   evaluations: SpeechEvaluation[];
   onGoTrain: () => void;
+  userName: string;
 }
 
 // Calculates current streak in consecutive days
@@ -53,10 +66,14 @@ function calculateStreak(evals: SpeechEvaluation[]): number {
 
 interface Medal {
   id: string;
-  icon: string;
+  code: string;
   label: string;
   description: string;
   earned: boolean;
+  current: number;
+  target: number;
+  unit: string;
+  accent: string;
 }
 
 function getMedals(evals: SpeechEvaluation[]): Medal[] {
@@ -70,89 +87,245 @@ function getMedals(evals: SpeechEvaluation[]): Medal[] {
   return [
     {
       id: 'first',
-      icon: '🎯',
+      code: '01',
       label: 'Primeiro Treino',
       description: 'Complete sua primeira sessão',
       earned: total >= 1,
+      current: Math.min(total, 1), target: 1, unit: 'sessão', accent: '#00E7FF',
     },
     {
       id: 'five',
-      icon: '🔥',
+      code: '05',
       label: '5 Treinos',
       description: 'Complete 5 sessões de treinamento',
       earned: total >= 5,
+      current: Math.min(total, 5), target: 5, unit: 'sessões', accent: '#22C55E',
     },
     {
       id: 'ten',
-      icon: '💎',
+      code: '10',
       label: '10 Treinos',
       description: 'Complete 10 sessões de treinamento',
       earned: total >= 10,
+      current: Math.min(total, 10), target: 10, unit: 'sessões', accent: '#3B82F6',
     },
     {
       id: 'twenty',
-      icon: '🚀',
+      code: '20',
       label: '20 Treinos',
       description: 'Complete 20 sessões de treinamento',
       earned: total >= 20,
+      current: Math.min(total, 20), target: 20, unit: 'sessões', accent: '#8B5CF6',
     },
     {
       id: 'score85',
-      icon: '⭐',
+      code: '85',
       label: 'Nota 85+',
       description: 'Alcance 85 ou mais em uma análise',
       earned: bestScore >= 85,
+      current: Math.min(bestScore, 85), target: 85, unit: 'pontos', accent: '#EAB308',
     },
     {
       id: 'score90',
-      icon: '🏆',
+      code: '90',
       label: 'Nota 90+',
       description: 'Alcance nota 90 ou mais em uma análise',
       earned: bestScore >= 90,
+      current: Math.min(bestScore, 90), target: 90, unit: 'pontos', accent: '#F97316',
     },
     {
       id: 'diccao95',
-      icon: '🎓',
+      code: 'DIC',
       label: 'Mestre da Dicção',
       description: 'Alcance 95+ em dicção',
       earned: bestDiccao >= 95,
+      current: Math.min(bestDiccao, 95), target: 95, unit: 'dicção', accent: '#EC4899',
     },
     {
       id: 'ritmo90',
-      icon: '🎵',
+      code: 'RIT',
       label: 'Ritmo Perfeito',
       description: 'Alcance 90+ em ritmo de fala',
       earned: bestRitmo >= 90,
+      current: Math.min(bestRitmo, 90), target: 90, unit: 'ritmo', accent: '#14B8A6',
     },
     {
       id: 'streak3',
-      icon: '⚡',
+      code: '3D',
       label: 'Série de 3 Dias',
       description: 'Treine por 3 dias consecutivos',
       earned: streak >= 3,
+      current: Math.min(streak, 3), target: 3, unit: 'dias', accent: '#F59E0B',
     },
     {
       id: 'streak7',
-      icon: '🌟',
+      code: '7D',
       label: 'Semana Completa',
       description: 'Treine por 7 dias seguidos',
       earned: streak >= 7,
+      current: Math.min(streak, 7), target: 7, unit: 'dias', accent: '#84CC16',
     },
     {
       id: 'time30',
-      icon: '⏱️',
+      code: '30M',
       label: '30 Minutos',
       description: 'Acumule 30 minutos de treino total',
       earned: totalSecs >= 1800,
+      current: Math.min(Math.floor(totalSecs / 60), 30), target: 30, unit: 'minutos', accent: '#6366F1',
     },
     {
       id: 'time60',
-      icon: '🕐',
+      code: '1H',
       label: '1 Hora',
       description: 'Acumule 1 hora de treino total',
       earned: totalSecs >= 3600,
+      current: Math.min(Math.floor(totalSecs / 60), 60), target: 60, unit: 'minutos', accent: '#F43F5E',
     },
   ];
+}
+
+function AchievementBadge({ medal, compact = false }: { medal: Medal; compact?: boolean }) {
+  const progress = Math.round((medal.current / medal.target) * 100);
+  return (
+    <div
+      className={`relative grid place-items-center ${compact ? 'h-10 w-10' : 'h-20 w-20'}`}
+      style={{ color: medal.earned ? medal.accent : '#5b6670' }}
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 96 108" className="absolute inset-0 h-full w-full drop-shadow-[0_10px_18px_rgba(0,0,0,0.35)]">
+        <defs>
+          <linearGradient id={`badge-${medal.id}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={medal.earned ? medal.accent : '#273038'} stopOpacity=".32" />
+            <stop offset="100%" stopColor="#071014" stopOpacity=".98" />
+          </linearGradient>
+        </defs>
+        <path d="M48 3 88 20v34c0 25-16 41-40 51C24 95 8 79 8 54V20L48 3Z" fill={`url(#badge-${medal.id})`} stroke="currentColor" strokeWidth="2.5" />
+        <path d="M48 12 79 25v28c0 19-11 32-31 42-20-10-31-23-31-42V25L48 12Z" fill="none" stroke="currentColor" strokeOpacity=".35" />
+        <path d="M26 69h44" stroke="currentColor" strokeOpacity=".55" />
+        {medal.earned && <circle cx="48" cy="48" r="25" fill="none" stroke="currentColor" strokeOpacity=".18" />}
+      </svg>
+      <span className={`${compact ? 'text-[8px]' : 'text-[15px]'} relative -mt-1 font-black tracking-[0.08em]`}>
+        {medal.code}
+      </span>
+      {!medal.earned && <LockKeyhole className={`absolute ${compact ? 'h-3 w-3' : 'h-4 w-4'} bottom-[16%] text-white/30`} />}
+      {medal.earned && !compact && (
+        <span className="absolute -bottom-1 rounded-full border border-current bg-[#071014] px-1.5 text-[7px] font-black tracking-wider">
+          {progress}%
+        </span>
+      )}
+    </div>
+  );
+}
+
+async function createAchievementPng(
+  medal: Medal,
+  userName: string,
+  stats: { sessions: number; average: number; best: number; streak: number }
+): Promise<Blob> {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1200;
+  canvas.height = 1500;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas indisponível');
+
+  ctx.fillStyle = '#03080B';
+  ctx.fillRect(0, 0, 1200, 1500);
+
+  ctx.strokeStyle = `${medal.accent}1F`;
+  ctx.lineWidth = 2;
+  for (let x = -400; x < 1500; x += 110) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 700, 1500);
+    ctx.stroke();
+  }
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#00E7FF';
+  ctx.font = '800 44px system-ui, sans-serif';
+  ctx.fillText('SPEEK IT.', 80, 100);
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.font = '600 18px system-ui, sans-serif';
+  ctx.fillText('SUA VOZ EM MOVIMENTO', 82, 140);
+
+  ctx.save();
+  ctx.translate(600, 470);
+  ctx.shadowColor = medal.accent;
+  ctx.shadowBlur = 42;
+  ctx.beginPath();
+  ctx.moveTo(0, -190);
+  ctx.lineTo(175, -115);
+  ctx.lineTo(175, 45);
+  ctx.quadraticCurveTo(175, 175, 0, 245);
+  ctx.quadraticCurveTo(-175, 175, -175, 45);
+  ctx.lineTo(-175, -115);
+  ctx.closePath();
+  const shield = ctx.createLinearGradient(-180, -180, 180, 240);
+  shield.addColorStop(0, `${medal.accent}70`);
+  shield.addColorStop(1, '#061116');
+  ctx.fillStyle = shield;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = medal.accent;
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 5, 112, 0, Math.PI * 2);
+  ctx.strokeStyle = `${medal.accent}55`;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = medal.accent;
+  ctx.textAlign = 'center';
+  ctx.font = `900 ${medal.code.length > 2 ? 68 : 98}px system-ui, sans-serif`;
+  ctx.fillText(medal.code, 0, 36);
+  ctx.restore();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = medal.accent;
+  ctx.font = '800 20px system-ui, sans-serif';
+  ctx.fillText('CONQUISTA DESBLOQUEADA', 600, 785);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '800 58px system-ui, sans-serif';
+  ctx.fillText(medal.label, 600, 865);
+  ctx.fillStyle = medal.accent;
+  ctx.font = '700 30px system-ui, sans-serif';
+  ctx.fillText(userName, 600, 920);
+  ctx.fillStyle = 'rgba(255,255,255,.58)';
+  ctx.font = '400 27px system-ui, sans-serif';
+  ctx.fillText(medal.description, 600, 970);
+
+  const cards = [
+    ['SESSÕES', stats.sessions.toString()],
+    ['MÉDIA', `${stats.average}/100`],
+    ['RECORDE', `${stats.best}/100`],
+    ['SEQUÊNCIA', `${stats.streak} dias`],
+  ];
+  cards.forEach(([label, value], index) => {
+    const x = 80 + (index % 2) * 530;
+    const y = 1060 + Math.floor(index / 2) * 155;
+    ctx.fillStyle = 'rgba(255,255,255,.045)';
+    ctx.strokeStyle = 'rgba(255,255,255,.1)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, 490, 125, 24);
+    ctx.fill();
+    ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,.42)';
+    ctx.font = '700 16px system-ui, sans-serif';
+    ctx.fillText(label, x + 28, y + 40);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '800 34px system-ui, sans-serif';
+    ctx.fillText(value, x + 28, y + 87);
+  });
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,.34)';
+  ctx.font = '500 18px system-ui, sans-serif';
+  ctx.fillText(`Emitida em ${new Date().toLocaleDateString('pt-BR')} • Speek It`, 600, 1435);
+
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Falha ao gerar PNG'))), 'image/png')
+  );
 }
 
 // Pure SVG line chart — no external libs needed
@@ -335,7 +508,9 @@ function ScoreChart({ evaluations }: { evaluations: SpeechEvaluation[] }) {
   );
 }
 
-export default function Dashboard({ evaluations, onGoTrain }: Props) {
+export default function Dashboard({ evaluations, onGoTrain, userName }: Props) {
+  const [selectedMedal, setSelectedMedal] = useState<Medal | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
   const totalSessions = evaluations.length;
   const avgScore =
     totalSessions > 0
@@ -347,6 +522,41 @@ export default function Dashboard({ evaluations, onGoTrain }: Props) {
   const streak = calculateStreak(evaluations);
   const medals = getMedals(evaluations);
   const earnedMedals = medals.filter((m) => m.earned);
+
+  const shareAchievement = async (medal: Medal) => {
+    setIsSharing(true);
+    try {
+      const blob = await createAchievementPng(medal, userName, {
+        sessions: totalSessions,
+        average: avgScore,
+        best: bestScore,
+        streak,
+      });
+      const filename = `speek-it-conquista-${medal.id}.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
+      setIsSharing(false);
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Conquista Speek It — ${medal.label}`,
+          text: `Desbloqueei a conquista “${medal.label}” no Speek It.`,
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        console.error('Não foi possível compartilhar a conquista:', error);
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   // Trend: compare last 5 vs previous 5
   const sorted = [...evaluations].sort((a, b) => a.createdAt - b.createdAt);
@@ -417,7 +627,7 @@ export default function Dashboard({ evaluations, onGoTrain }: Props) {
   }
 
   return (
-    <div className="flex-1 p-6 md:p-10 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 5rem)' }}>
+    <div className="flex-1 p-4 sm:p-6 md:p-10 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 4.5rem)' }}>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div>
@@ -428,7 +638,7 @@ export default function Dashboard({ evaluations, onGoTrain }: Props) {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#09090d] rounded-2xl p-5 border border-white/5">
             <div className="flex items-center gap-2 mb-3">
               <Mic className="w-4 h-4 text-blue-400 shrink-0" />
@@ -504,34 +714,49 @@ export default function Dashboard({ evaluations, onGoTrain }: Props) {
             <ScoreChart evaluations={evaluations} />
           </div>
 
-          {/* Medals — 1/3 width */}
+          {/* Professional achievement insignias — 1/3 width */}
           <div className="bg-[#09090d] rounded-2xl p-6 border border-white/5 space-y-4">
             <h3 className="text-xs font-bold text-white/50 uppercase tracking-widest flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-400" />
+              <Award className="w-4 h-4 text-cyan-400" />
               Conquistas
-              <span className="text-amber-400 ml-1">
+              <span className="text-cyan-400 ml-1">
                 {earnedMedals.length}/{medals.length}
               </span>
             </h3>
 
-            {/* Medal grid */}
-            <div className="grid grid-cols-4 gap-2">
+            <p className="text-[11px] leading-5 text-white/35">
+              Insígnias oficiais do seu progresso. Selecione uma conquista desbloqueada para compartilhar.
+            </p>
+
+            <div className="grid grid-cols-3 gap-3">
               {medals.map((medal) => (
-                <div
+                <button
+                  type="button"
                   key={medal.id}
+                  onClick={() => medal.earned && setSelectedMedal(medal)}
+                  disabled={!medal.earned}
                   title={`${medal.label}: ${medal.description}`}
-                  className={`aspect-square flex items-center justify-center rounded-xl text-lg transition-all cursor-default ${
+                  className={`group relative flex min-h-28 flex-col items-center justify-center overflow-hidden rounded-2xl border p-2 transition-all ${
                     medal.earned
-                      ? 'bg-white/10 border border-white/15 shadow-sm'
-                      : 'bg-white/[0.03] border border-white/5 opacity-25 grayscale'
+                      ? 'cursor-pointer border-white/10 bg-white/[0.035] hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-cyan-400/[0.04]'
+                      : 'cursor-not-allowed border-white/5 bg-white/[0.015] opacity-60'
                   }`}
                 >
-                  {medal.icon}
-                </div>
+                  {!medal.earned && (
+                    <span
+                      className="absolute inset-x-3 top-0 h-[3px] rounded-b-full opacity-75"
+                      style={{ backgroundColor: medal.accent }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <AchievementBadge medal={medal} />
+                  <span className="mt-2 line-clamp-2 text-center text-[9px] font-bold leading-3 text-white/55">
+                    {medal.label}
+                  </span>
+                </button>
               ))}
             </div>
 
-            {/* Next medal to earn */}
             <div className="pt-3 border-t border-white/5 space-y-2">
               <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">
                 Próximas conquistas
@@ -540,19 +765,93 @@ export default function Dashboard({ evaluations, onGoTrain }: Props) {
                 .filter((m) => !m.earned)
                 .slice(0, 3)
                 .map((m) => (
-                  <div key={m.id} className="flex items-center gap-2 text-[11px] text-white/40">
-                    <span className="text-base grayscale">{m.icon}</span>
-                    <span className="leading-tight">{m.description}</span>
+                  <div key={m.id} className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2 text-[11px] text-white/45">
+                    <AchievementBadge medal={m} compact />
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-white/60">{m.label}</span>
+                      <span className="leading-tight">{m.current}/{m.target} {m.unit}</span>
+                      <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/5">
+                        <div
+                          className="h-full rounded-full bg-cyan-400/55"
+                          style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
               {medals.filter((m) => !m.earned).length === 0 && (
-                <p className="text-[11px] text-emerald-400 font-bold">
-                  🎉 Todas as conquistas desbloqueadas!
+                <p className="flex items-center gap-2 text-[11px] text-emerald-400 font-bold">
+                  <Check className="h-4 w-4" /> Todas as conquistas desbloqueadas
                 </p>
               )}
             </div>
           </div>
         </div>
+
+        {selectedMedal && (
+          <div
+            className="fixed inset-0 z-[80] grid place-items-center bg-black/75 p-4 backdrop-blur-md"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Compartilhar conquista ${selectedMedal.label}`}
+            onClick={() => setSelectedMedal(null)}
+          >
+            <div
+              className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-cyan-400/20 bg-[#061014] shadow-[0_30px_100px_rgba(0,0,0,.65)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedMedal(null)}
+                aria-label="Fechar"
+                className="absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-black/30 text-white/60 transition hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="relative overflow-hidden p-7 text-center">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(0,231,255,.12),transparent_48%)]" />
+                <div className="relative">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-400/70">Insígnia oficial Speek It</p>
+                  <div className="mx-auto mt-5 w-fit scale-125">
+                    <AchievementBadge medal={selectedMedal} />
+                  </div>
+                  <h3 className="mt-7 text-2xl font-black text-white">{selectedMedal.label}</h3>
+                  <p className="mt-2 text-sm font-bold" style={{ color: selectedMedal.accent }}>
+                    {userName}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-white/45">{selectedMedal.description}</p>
+                  <div className="mt-6 grid grid-cols-2 gap-3 text-left">
+                    {[
+                      ['Sessões', totalSessions],
+                      ['Média', `${avgScore}/100`],
+                      ['Recorde', `${bestScore}/100`],
+                      ['Sequência', `${streak} dias`],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-xl border border-white/8 bg-white/[0.035] p-3">
+                        <p className="text-[8px] font-bold uppercase tracking-widest text-white/30">{label}</p>
+                        <p className="mt-1 text-base font-black text-white">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-white/8 bg-black/20 p-4">
+                <button
+                  type="button"
+                  onClick={() => shareAchievement(selectedMedal)}
+                  disabled={isSharing}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3.5 text-sm font-black text-[#021014] transition hover:bg-cyan-300 disabled:opacity-60"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {isSharing ? 'Preparando imagem...' : 'Compartilhar conquista em PNG'}
+                </button>
+                <p className="mt-2 text-center text-[10px] text-white/30">
+                  PNG vertical 1200 × 1500, pronto para redes sociais.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Performance breakdown by metric */}
         <div className="bg-[#09090d] rounded-2xl p-6 border border-white/5 space-y-5">

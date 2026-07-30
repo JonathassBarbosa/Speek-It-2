@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Restore session on mount
   useEffect(() => {
-    const stored = localStorage.getItem('vocalise_token');
+    const stored = localStorage.getItem('speekit_token');
     if (!stored) {
       setIsLoading(false);
       return;
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(u);
       })
       .catch(() => {
-        localStorage.removeItem('vocalise_token');
+        localStorage.removeItem('speekit_token');
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erro ao fazer login.');
-    localStorage.setItem('vocalise_token', data.token);
+    localStorage.setItem('speekit_token', data.token);
     setToken(data.token);
     setUser(data.user);
   };
@@ -74,13 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erro ao criar conta.');
-    localStorage.setItem('vocalise_token', data.token);
+    localStorage.setItem('speekit_token', data.token);
     setToken(data.token);
     setUser(data.user);
   };
 
   const logout = () => {
-    localStorage.removeItem('vocalise_token');
+    localStorage.removeItem('speekit_token');
     setToken(null);
     setUser(null);
   };
