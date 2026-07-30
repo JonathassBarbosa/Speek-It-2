@@ -11,6 +11,7 @@ import { initDefaultAdmin } from './server/db';
 import authRoutes from './server/routes/auth';
 import adminRoutes from './server/routes/admin';
 import evaluationsRoutes from './server/routes/evaluations';
+import monitoringRoutes from './server/routes/monitoring';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/evaluations', evaluationsRoutes);
+app.use('/api/monitoring', monitoringRoutes);
 
 // ─── Vite / static serving ──────────────────────────────────────────────────
 

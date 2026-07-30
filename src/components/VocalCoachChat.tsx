@@ -86,11 +86,9 @@ export const VocalCoachChat: React.FC<VocalCoachChatProps> = ({
 
   // Enviar mensagem para a API unificada do n8n
   const sendToN8n = async (payload: { text?: string; audioBlob?: Blob }) => {
-    const apiUrl =
-      import.meta.env.VITE_COACH_API_URL?.trim() ||
-      'https://n8n-65-109-163-218.nip.io/webhook/speek-it-coach-local';
+    const apiUrl = import.meta.env.VITE_COACH_API_URL?.trim();
     if (!apiUrl) {
-      setError('O Vocal Coach ainda não foi configurado.');
+      setError('O Vocal Coach está temporariamente indisponível. Tente novamente mais tarde.');
       return;
     }
 

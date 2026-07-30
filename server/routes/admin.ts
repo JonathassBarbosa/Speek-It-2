@@ -4,7 +4,13 @@
  */
 
 import { Router } from 'express';
-import { readEvals, readUsers } from '../db.js';
+import {
+  createBackup,
+  listBackups,
+  readEvals,
+  readUsers,
+  restoreBackup,
+} from '../db.js';
 import { adminOnly, authMiddleware } from '../auth.js';
 
 const router = Router();
@@ -42,6 +48,30 @@ router.get('/stats', authMiddleware, adminOnly, async (_req: any, res) => {
       : 0,
     userStats,
   });
+});
+
+router.get('/backups', authMiddleware, adminOnly, async (_req: any, res) => {
+  return res.json({ backups: await listBackups() });
+});
+
+router.post('/backups', authMiddleware, adminOnly, async (req: any, res) => {
+  const backup = await createBackup(req.userId);
+  return res.status(201).json({
+    backup: {
+      id: backup.id,
+      createdAt: backup.createdAt,
+      userCount: backup.users.length,
+      evaluationCount: backup.evaluations.length,
+    },
+  });
+});
+
+router.post('/backups/:id/restore', authMiddleware, adminOnly, async (req: any, res) => {
+  const restored = await restoreBackup(String(req.params.id), req.userId);
+  if (!restored) {
+    return res.status(404).json({ error: 'Backup não encontrado.' });
+  }
+  return res.json({ restored });
 });
 
 export default router;

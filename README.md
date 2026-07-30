@@ -1,117 +1,104 @@
-# 🎙️ Speek-It — Teleprompter Inteligente
+# Speek It.
 
-Sistema de teleprompter com análise de oratória em tempo real. Grave sua leitura, receba notas de **dicção, ritmo, entonação e pausas** e acompanhe sua evolução no histórico.
+Plataforma brasileira de treino de comunicação com teleprompter, acompanhamento palavra por palavra, análise local de fala, histórico de evolução e Coach IA em português do Brasil.
 
-## ✨ Funcionalidades
+## Funcionalidades
 
-- **Teleprompter** com rolagem automática ajustável e linha de foco
-- **Gravação de voz** com visualizador de espectro de áudio
-- **Análise de oratória local** (heurística, sem depender de nenhuma API externa) com notas detalhadas de dicção, ritmo, entonação e pausas
-- **Banco de textos** com categorias: Onboarding, Vendas, Motivacional e Treino Rápido
-- **Histórico de treinos** com playback de áudio e exportação de relatório (.txt)
-- **Modo claro/escuro** com tema dark imersivo por padrão
-- **Armazenamento local** via IndexedDB (sem servidor necessário para uso básico)
+- Teleprompter com velocidade, tamanho e linha de foco ajustáveis.
+- Gravação de áudio e modo de criação com câmera.
+- Acompanhamento das palavras reconhecidas durante a leitura.
+- Avaliação local de dicção, ritmo, entonação e pausas.
+- Histórico com reprodução das gravações armazenadas no navegador.
+- Dashboard de evolução e conquistas compartilháveis.
+- Coach IA por texto ou voz integrado ao n8n e Gemini.
+- Autenticação, painel administrativo e sincronização de métricas.
+- Backup e restauração dos usuários e avaliações pelo painel administrativo.
+- Endpoint de saúde e monitoramento automático de disponibilidade.
 
-## 🚀 Como rodar localmente
+## Arquitetura
 
-**Pré-requisitos:** Node.js 20+
+- React 19, TypeScript, Vite e Tailwind CSS v4 no frontend.
+- API Express executada como função serverless na Vercel.
+- Redis/Upstash para usuários, avaliações, backups e registros de erro.
+- IndexedDB no navegador para textos, avaliações completas e arquivos de áudio.
+- n8n na VPS para o fluxo do Coach IA.
+
+O frontend e a API são publicados pela Vercel. GitHub Pages não é compatível com a arquitetura atual porque autenticação e administração dependem da API.
+
+## Desenvolvimento local
+
+Pré-requisitos: Node.js 20 ou superior.
 
 ```bash
-# 1. Clone o repositório
 git clone https://github.com/JonathassBarbosa/Speek-It-2.git
 cd Speek-It-2
-
-# 2. Instale as dependências
-npm install
-
-# 3. Inicie o servidor de desenvolvimento (nenhuma variável de ambiente é necessária)
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-Acesse em: [http://localhost:3000](http://localhost:3000)
+O aplicativo local fica disponível em `http://localhost:3000`.
 
-## 🌐 Deploy no GitHub Pages
+## Variáveis de ambiente
 
-O projeto usa **Vite** para build estático e **gh-pages** para deploy. Como a análise de oratória roda inteiramente local, o app funciona da mesma forma no GitHub Pages.
+| Variável | Ambiente | Finalidade |
+|---|---|---|
+| `VITE_COACH_API_URL` | build/frontend | Webhook HTTPS de produção do Coach no n8n |
+| `JWT_SECRET` | servidor | Assinatura dos tokens de autenticação |
+| `ADMIN_EMAIL` | servidor | E-mail do administrador inicial |
+| `ADMIN_PASSWORD` | servidor | Senha forte do administrador inicial |
+| `UPSTASH_REDIS_REST_URL` | servidor | Endpoint REST do Redis |
+| `UPSTASH_REDIS_REST_TOKEN` | servidor | Credencial REST do Redis |
+
+As variáveis que começam com `VITE_` ficam visíveis no código do navegador. Nunca armazene chaves privadas nelas. A chave do Gemini deve permanecer protegida dentro das credenciais do n8n.
+
+## Validação
 
 ```bash
-# Antes do deploy, edite "homepage" no package.json com sua URL real:
-# "homepage": "https://SEU_USUARIO.github.io/speek-it"
-
-npm run deploy
+npm run lint
+npm run test
+npm run build
+npm audit --omit=dev
 ```
 
-## 🛠️ Scripts
+O comando `npm run check` executa tipos, testes e compilação em sequência. A automação `.github/workflows/ci.yml` repete essas validações em cada PR e atualização da `main`.
 
-| Script | Descrição |
-|---|---|
-| `npm run dev` | Inicia servidor de desenvolvimento (Vite + Express) |
-| `npm run build` | Gera build de produção em `/dist` |
-| `npm run deploy` | Faz deploy no GitHub Pages |
-| `npm run lint` | Verifica tipos TypeScript |
+## Publicação na Vercel
 
-## 🏗️ Tecnologias
+1. Importe o repositório na Vercel.
+2. Cadastre todas as variáveis de servidor e `VITE_COACH_API_URL`.
+3. Conecte um Redis compatível com REST.
+4. Publique a branch `main`.
+5. Confirme `GET /api/monitoring/health`.
+6. Quando o lançamento for público, ajuste a proteção de acesso da Vercel conscientemente.
 
-- **React 19** + **TypeScript**
-- **Tailwind CSS v4** (via Vite plugin)
-- **Vite 6**
-- **Express** (servidor de API)
-- **IndexedDB** (armazenamento local de textos, avaliações e áudios)
-- **Web Speech API** (transcrição em tempo real)
-- **MediaRecorder API** (gravação de áudio)
+O arquivo `vercel.json` encaminha `/api/*` para a função Express e as demais rotas para o aplicativo.
 
-## 📁 Estrutura do Projeto
+## Monitoramento
 
-```
-speek-it/
-├── src/
-│   ├── App.tsx                        # Orquestrador: conecta hooks e telas, sem lógica própria
-│   ├── main.tsx                       # Entry point
-│   ├── index.css                      # Estilos globais + Tailwind
-│   ├── types.ts                       # Interfaces TypeScript
-│   ├── hooks/
-│   │   ├── useTrainingLibrary.ts      # Textos/avaliações + persistência (IndexedDB)
-│   │   ├── useTeleprompter.ts         # Scroll, timer e auto-scroll do teleprompter
-│   │   ├── useWordTracking.ts         # Tokenização do texto e acompanhamento palavra-a-palavra
-│   │   ├── useVideoCreatorMode.ts     # Câmera + gravação de vídeo (Modo Creator)
-│   │   ├── useSpeechRecorder.ts       # Microfone, MediaRecorder e Web Speech API
-│   │   ├── useSpeechEvaluation.ts     # Avaliação de oratória (heurística local)
-│   │   └── useKeyboardShortcuts.ts    # Atalhos de teclado (Space/R/Esc)
-│   ├── components/
-│   │   ├── layout/
-│   │   │   └── AppNavbar.tsx          # Navegação (desktop + mobile)
-│   │   ├── train/
-│   │   │   ├── TrainingTab.tsx        # Composição da aba de treino
-│   │   │   ├── ScriptSidebar.tsx      # Lista de roteiros
-│   │   │   ├── TeleprompterMonitor.tsx# Monitor de leitura + controles
-│   │   │   └── AnalysisPanel.tsx      # Painel de resultado da análise
-│   │   ├── history/
-│   │   │   └── HistoryTab.tsx         # Aba de histórico de treinos
-│   │   ├── TextBank.tsx               # Gerenciamento de roteiros (Banco de Textos)
-│   │   ├── Dashboard.tsx              # Dashboard de evolução
-│   │   ├── AdminDashboard.tsx         # Painel administrativo
-│   │   ├── LoginPage.tsx              # Autenticação
-│   │   └── ThemeToggle.tsx            # Alternador de tema
-│   ├── contexts/
-│   │   └── AuthContext.tsx            # Sessão do usuário (JWT)
-│   └── lib/
-│       ├── db.ts                      # IndexedDB (textos, avaliações, áudio)
-│       ├── speechAnalysis.ts          # Normalização de texto + análise local de fala
-│       └── format.ts                  # Formatação de tempo e categorias
-├── server.ts                          # Entry point: monta rotas + Vite/estático
-├── server/
-│   ├── db.ts                          # Persistência em JSON (usuários, avaliações)
-│   ├── auth.ts                        # JWT + middlewares de autenticação
-│   └── routes/
-│       ├── auth.ts                    # /api/auth (register, login, me)
-│       ├── admin.ts                   # /api/admin (estatísticas)
-│       └── evaluations.ts             # /api/evaluations (sync com o servidor)
-├── vite.config.ts
-├── tsconfig.json
-└── package.json
-```
+- `GET /api/monitoring/health` verifica API e persistência.
+- Erros críticos de renderização autenticada são enviados para o backend.
+- Administradores podem consultar `GET /api/monitoring/errors`.
+- A automação `.github/workflows/availability.yml` consulta a produção a cada 30 minutos.
+- Falhas aparecem na aba **Actions** do GitHub e podem usar as notificações nativas do repositório.
 
-## 📄 Licença
+## Backup e restauração
 
-Apache-2.0 — veja [LICENSE](LICENSE) para detalhes.
-# Speek-It-2
+O painel administrativo permite criar snapshots de usuários e avaliações. São mantidos os 14 backups mais recentes no Redis.
+
+Antes de uma restauração, o sistema cria automaticamente um snapshot do estado atual. A restauração exige uma sessão de administrador.
+
+Recomendações operacionais:
+
+- crie um backup antes de mudanças relevantes;
+- valide periodicamente se os snapshots aparecem no painel;
+- mantenha também o backup gerenciado oferecido pelo provedor do Redis;
+- restrinja o acesso às credenciais da Vercel, Redis e n8n.
+
+## Privacidade dos arquivos
+
+As gravações de treino e os vídeos permanecem no navegador do usuário. O Coach envia ao n8n somente o texto ou áudio que o usuário decidir enviar naquela conversa. As métricas resumidas das avaliações são sincronizadas com o servidor.
+
+## Licença
+
+Apache-2.0.

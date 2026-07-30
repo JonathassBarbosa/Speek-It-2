@@ -6,6 +6,7 @@
 import path from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 
 // ─── Data persistence ──────────────────────────────────────────────────────
 
@@ -22,6 +23,10 @@ const REDIS_TOKEN =
   process.env.UPSTASH_KV_REST_API_TOKEN;
 const USERS_KEY = 'speek-it:users';
 const EVALS_KEY = 'speek-it:evaluations';
+const BACKUPS_KEY = 'speek-it:backups';
+const CLIENT_ERRORS_KEY = 'speek-it:client-errors';
+const MAX_BACKUPS = 14;
+const MAX_CLIENT_ERRORS = 100;
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -49,6 +54,26 @@ export interface DbEval {
   entonacaoScore: number;
   pausasScore: number;
   duration: number;
+  createdAt: number;
+}
+
+export interface DbBackup {
+  id: string;
+  createdAt: number;
+  createdBy: string;
+  schemaVersion: 1;
+  users: DbUser[];
+  evaluations: DbEval[];
+}
+
+export interface ClientErrorRecord {
+  id: string;
+  userId: string;
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  path?: string;
+  userAgent?: string;
   createdAt: number;
 }
 
@@ -109,6 +134,94 @@ export function readEvals(): Promise<DbEval[]> {
 
 export function writeEvals(evals: DbEval[]): Promise<void> {
   return writeCollection(EVALS_KEY, EVALS_FILE, evals);
+}
+
+export async function getStorageHealth() {
+  const startedAt = Date.now();
+  const users = await readUsers();
+  const evaluations = await readEvals();
+  return {
+    backend: REDIS_URL && REDIS_TOKEN ? 'redis' : 'local',
+    latencyMs: Date.now() - startedAt,
+    users: users.length,
+    evaluations: evaluations.length,
+  };
+}
+
+export async function createBackup(createdBy: string): Promise<DbBackup> {
+  const [users, evaluations, backups] = await Promise.all([
+    readUsers(),
+    readEvals(),
+    readCollection<DbBackup>(BACKUPS_KEY, path.join(DATA_DIR, 'backups.json')),
+  ]);
+  const backup: DbBackup = {
+    id: randomUUID(),
+    createdAt: Date.now(),
+    createdBy,
+    schemaVersion: 1,
+    users,
+    evaluations,
+  };
+  await writeCollection(
+    BACKUPS_KEY,
+    path.join(DATA_DIR, 'backups.json'),
+    [backup, ...backups].slice(0, MAX_BACKUPS),
+  );
+  return backup;
+}
+
+export async function listBackups() {
+  const backups = await readCollection<DbBackup>(
+    BACKUPS_KEY,
+    path.join(DATA_DIR, 'backups.json'),
+  );
+  return backups.map(({ id, createdAt, createdBy, schemaVersion, users, evaluations }) => ({
+    id,
+    createdAt,
+    createdBy,
+    schemaVersion,
+    userCount: users.length,
+    evaluationCount: evaluations.length,
+  }));
+}
+
+export async function restoreBackup(id: string, restoredBy: string) {
+  const backups = await readCollection<DbBackup>(
+    BACKUPS_KEY,
+    path.join(DATA_DIR, 'backups.json'),
+  );
+  const backup = backups.find((item) => item.id === id);
+  if (!backup) return null;
+
+  await createBackup(`pré-restauração:${restoredBy}`);
+  await writeUsers(backup.users);
+  await writeEvals(backup.evaluations);
+  return {
+    id: backup.id,
+    userCount: backup.users.length,
+    evaluationCount: backup.evaluations.length,
+  };
+}
+
+export async function recordClientError(
+  error: Omit<ClientErrorRecord, 'id' | 'createdAt'>,
+) {
+  const file = path.join(DATA_DIR, 'client-errors.json');
+  const errors = await readCollection<ClientErrorRecord>(CLIENT_ERRORS_KEY, file);
+  const entry: ClientErrorRecord = {
+    ...error,
+    id: randomUUID(),
+    createdAt: Date.now(),
+  };
+  await writeCollection(CLIENT_ERRORS_KEY, file, [entry, ...errors].slice(0, MAX_CLIENT_ERRORS));
+  return entry.id;
+}
+
+export function readClientErrors() {
+  return readCollection<ClientErrorRecord>(
+    CLIENT_ERRORS_KEY,
+    path.join(DATA_DIR, 'client-errors.json'),
+  );
 }
 
 export async function initDefaultAdmin() {
