@@ -5,6 +5,7 @@ import {
   recordClientError,
 } from '../db.js';
 import { adminOnly, authMiddleware } from '../auth.js';
+import { isEmailDeliveryConfigured } from '../email.js';
 
 const router = Router();
 
@@ -17,6 +18,9 @@ router.get('/health', async (_req, res) => {
       service: 'speek-it-api',
       timestamp: new Date().toISOString(),
       storage,
+      services: {
+        email: isEmailDeliveryConfigured() ? 'configured' : 'not-configured',
+      },
     });
   } catch (error) {
     console.error('[health]', error);
