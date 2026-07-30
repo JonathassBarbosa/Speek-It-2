@@ -49,8 +49,16 @@ O aplicativo local fica disponível em `http://localhost:3000`.
 | `ADMIN_PASSWORD` | servidor | Senha forte do administrador inicial |
 | `UPSTASH_REDIS_REST_URL` | servidor | Endpoint REST do Redis |
 | `UPSTASH_REDIS_REST_TOKEN` | servidor | Credencial REST do Redis |
+| `RESEND_API_KEY` | servidor | Envio dos códigos de recuperação de senha |
+| `EMAIL_FROM` | servidor | Remetente verificado, como `Speek It <recuperacao@dominio.com>` |
 
 As variáveis que começam com `VITE_` ficam visíveis no código do navegador. Nunca armazene chaves privadas nelas. A chave do Gemini deve permanecer protegida dentro das credenciais do n8n.
+
+### Recuperação de senha
+
+O fluxo de recuperação envia um código numérico de seis dígitos para o e-mail cadastrado. O código expira em 10 minutos, permite no máximo cinco tentativas e só pode ser solicitado novamente após 60 segundos.
+
+O envio utiliza a API da Resend. Cadastre `RESEND_API_KEY` e um remetente verificado em `EMAIL_FROM` nas variáveis da Vercel. O endpoint de saúde informa `services.email: configured` quando o envio está pronto.
 
 ## Validação
 

@@ -25,6 +25,7 @@ const USERS_KEY = 'speek-it:users';
 const EVALS_KEY = 'speek-it:evaluations';
 const BACKUPS_KEY = 'speek-it:backups';
 const CLIENT_ERRORS_KEY = 'speek-it:client-errors';
+const PASSWORD_RESETS_KEY = 'speek-it:password-resets';
 const MAX_BACKUPS = 14;
 const MAX_CLIENT_ERRORS = 100;
 
@@ -75,6 +76,14 @@ export interface ClientErrorRecord {
   path?: string;
   userAgent?: string;
   createdAt: number;
+}
+
+export interface PasswordResetRecord {
+  email: string;
+  codeHash: string;
+  createdAt: number;
+  expiresAt: number;
+  attempts: number;
 }
 
 async function redisCommand(command: string[]): Promise<unknown> {
@@ -222,6 +231,67 @@ export function readClientErrors() {
     CLIENT_ERRORS_KEY,
     path.join(DATA_DIR, 'client-errors.json'),
   );
+}
+
+function passwordResetFile() {
+  return path.join(DATA_DIR, 'password-resets.json');
+}
+
+export async function createPasswordReset(
+  email: string,
+  codeHash: string,
+  expiresAt: number,
+) {
+  const now = Date.now();
+  const records = await readCollection<PasswordResetRecord>(
+    PASSWORD_RESETS_KEY,
+    passwordResetFile(),
+  );
+  const previous = records.find((record) => record.email === email && record.expiresAt > now);
+  if (previous && now - previous.createdAt < 60_000) return false;
+
+  const next = records
+    .filter((record) => record.email !== email && record.expiresAt > now)
+    .slice(0, 199);
+  next.unshift({ email, codeHash, createdAt: now, expiresAt, attempts: 0 });
+  await writeCollection(PASSWORD_RESETS_KEY, passwordResetFile(), next);
+  return true;
+}
+
+export async function verifyPasswordReset(email: string, codeHash: string) {
+  const now = Date.now();
+  const records = await readCollection<PasswordResetRecord>(
+    PASSWORD_RESETS_KEY,
+    passwordResetFile(),
+  );
+  const record = records.find((item) => item.email === email);
+  if (!record || record.expiresAt <= now || record.attempts >= 5) return false;
+
+  if (record.codeHash !== codeHash) {
+    record.attempts += 1;
+    await writeCollection(
+      PASSWORD_RESETS_KEY,
+      passwordResetFile(),
+      records.filter((item) => item.expiresAt > now),
+    );
+    return false;
+  }
+
+  await writeCollection(
+    PASSWORD_RESETS_KEY,
+    passwordResetFile(),
+    records.filter((item) => item.email !== email && item.expiresAt > now),
+  );
+  return true;
+}
+
+export async function updateUserPassword(email: string, passwordHash: string) {
+  const users = await readUsers();
+  const user = users.find((item) => item.email === email);
+  if (!user) return false;
+  user.passwordHash = passwordHash;
+  await writeUsers(users);
+  return true;
 }
 
 export async function initDefaultAdmin() {
