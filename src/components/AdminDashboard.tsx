@@ -16,6 +16,7 @@ import {
   RotateCcw,
   ShieldCheck,
 } from 'lucide-react';
+import SystemDiagnostics from './admin/SystemDiagnostics';
 
 interface UserStat {
   id: string;
@@ -162,7 +163,7 @@ export default function AdminDashboard({ onBack }: Props) {
                 Painel Administrativo
               </p>
             </div>
-            <h2 className="text-2xl font-bold text-white">Visão Geral dos Usuários</h2>
+            <h2 className="text-2xl font-bold text-white">Controle e operação</h2>
           </div>
           <button
             onClick={() => setLastRefresh(Date.now())}
@@ -180,6 +181,8 @@ export default function AdminDashboard({ onBack }: Props) {
             {error}
           </div>
         )}
+
+        <SystemDiagnostics />
 
         {/* Loading */}
         {loading && !stats && (

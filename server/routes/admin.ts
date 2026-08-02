@@ -12,6 +12,7 @@ import {
   restoreBackup,
 } from '../db.js';
 import { adminOnly, authMiddleware } from '../auth.js';
+import { getDiagnosticsSnapshot, runServerDiagnostic } from '../diagnostics.js';
 
 const router = Router();
 
@@ -48,6 +49,26 @@ router.get('/stats', authMiddleware, adminOnly, async (_req: any, res) => {
       : 0,
     userStats,
   });
+});
+
+router.get('/diagnostics', authMiddleware, adminOnly, async (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  return res.json({
+    checks: await getDiagnosticsSnapshot(),
+    refreshedAt: new Date().toISOString(),
+  });
+});
+
+router.post('/diagnostics/run', authMiddleware, adminOnly, async (req, res) => {
+  const id = String(req.body?.id ?? '').trim();
+  if (!id) return res.status(400).json({ error: 'Informe o diagnóstico que deve ser executado.' });
+  try {
+    return res.json({ check: await runServerDiagnostic(id) });
+  } catch (error) {
+    return res.status(400).json({
+      error: error instanceof Error ? error.message : 'Não foi possível executar o diagnóstico.',
+    });
+  }
 });
 
 router.get('/backups', authMiddleware, adminOnly, async (_req: any, res) => {
