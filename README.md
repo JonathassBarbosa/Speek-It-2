@@ -1,33 +1,92 @@
 # Speek It.
 
-Plataforma brasileira de treino de comunicação com teleprompter, acompanhamento palavra por palavra, análise local de fala, histórico de evolução e Coach IA em português do Brasil.
+Plataforma brasileira de treinamento de comunicação e oratória com teleprompter, acompanhamento palavra por palavra, análise local de fala, histórico de evolução, conquistas e Coach IA em português do Brasil.
+
+**Produção:** [speekit.jsbsmartservices.com.br](https://speekit.jsbsmartservices.com.br/)
+
+**API de saúde:** [speekit.jsbsmartservices.com.br/api/monitoring/health](https://speekit.jsbsmartservices.com.br/api/monitoring/health)
+
+**Repositório:** [JonathassBarbosa/Speek-It-2](https://github.com/JonathassBarbosa/Speek-It-2)
+
+## Situação atual
+
+O produto possui frontend e API publicados na Vercel, domínio próprio, persistência Redis, recuperação de senha por e-mail, Coach integrado ao n8n e painel administrativo com diagnóstico em tempo real.
+
+O treinamento principal não depende de IA externa: gravação, acompanhamento do roteiro e pontuação são processados no navegador. Apenas o Coach conversa com o webhook do n8n.
 
 ## Funcionalidades
 
-- Teleprompter com velocidade, tamanho e linha de foco ajustáveis.
-- Gravação de áudio e modo de criação com câmera.
-- Acompanhamento das palavras reconhecidas durante a leitura.
+- Cadastro, login e sessão com duração de sete dias.
+- Recuperação de senha por código de seis dígitos enviado por e-mail.
+- Teleprompter com velocidade, tamanho da fonte, progresso e atalhos.
+- Gravação de áudio e modo criador com câmera/vídeo.
+- Reconhecimento de fala em PT-BR e feedback por palavra.
 - Avaliação local de dicção, ritmo, entonação e pausas.
-- Histórico com reprodução das gravações armazenadas no navegador.
+- Biblioteca com roteiros predefinidos e personalizados.
+- Histórico com reprodução das gravações armazenadas no aparelho.
 - Dashboard de evolução e conquistas compartilháveis.
-- Coach IA por texto ou voz integrado ao n8n e Gemini.
-- Autenticação, painel administrativo e sincronização de métricas.
-- Backup e restauração dos usuários e avaliações pelo painel administrativo.
-- Endpoint de saúde e monitoramento automático de disponibilidade.
+- Coach IA por texto ou voz, com resposta em PT-BR.
+- Tema claro e escuro.
+- Administração de usuários, métricas, backups e restauração.
+- Central de diagnóstico de API, Redis, e-mail, microfone, navegador e Coach.
+- Monitoramento de disponibilidade e registro de erros do frontend.
 
-## Arquitetura
+## Documentação completa
 
-- React 19, TypeScript, Vite e Tailwind CSS v4 no frontend.
-- API Express executada como função serverless na Vercel.
-- Redis/Upstash para usuários, avaliações, backups e registros de erro.
-- IndexedDB no navegador para textos, avaliações completas e arquivos de áudio.
-- n8n na VPS para o fluxo do Coach IA.
+| Documento | Conteúdo |
+|---|---|
+| [Manual do usuário](docs/MANUAL-DO-USUARIO.md) | Cadastro, treino, Coach, histórico, evolução e permissões |
+| [Manual do administrador](docs/MANUAL-DO-ADMINISTRADOR.md) | Acesso administrativo, diagnóstico, usuários e backups |
+| [Arquitetura](docs/ARQUITETURA.md) | Componentes, fluxos, dados, tecnologias e decisões técnicas |
+| [API](docs/API.md) | Endpoints, autenticação, exemplos e códigos de resposta |
+| [Coach IA e n8n](docs/COACH-IA-E-N8N.md) | Workflow, webhook, contrato, ativação e testes |
+| [Operação e deploy](docs/OPERACAO-E-DEPLOY.md) | Desenvolvimento, Vercel, domínio, publicação e rollback |
+| [Segurança, dados e backups](docs/SEGURANCA-DADOS-E-BACKUPS.md) | Segredos, persistência, privacidade, backup e restauração |
+| [Solução de problemas](docs/SOLUCAO-DE-PROBLEMAS.md) | Diagnóstico de falhas comuns e roteiro para demonstrações |
+| [Inventário operacional](docs/INVENTARIO-OPERACIONAL.md) | Serviços, URLs, variáveis e onde localizar credenciais |
 
-O frontend e a API são publicados pela Vercel. GitHub Pages não é compatível com a arquitetura atual porque autenticação e administração dependem da API.
+## Arquitetura resumida
+
+```text
+Navegador
+├── React + Vite + Tailwind
+├── IndexedDB: roteiros, avaliações completas e áudios
+├── Web Speech API: transcrição e acompanhamento de palavras
+└── MediaRecorder: áudio e vídeo
+        │
+        ├── /api → Express na Vercel
+        │           ├── autenticação JWT
+        │           ├── usuários e métricas → Redis/Upstash
+        │           ├── recuperação → Resend
+        │           └── diagnóstico e backups
+        │
+        └── Coach → webhook HTTPS do n8n na VPS
+                    └── Gemini + resposta PT-BR
+```
+
+Mais detalhes em [Arquitetura](docs/ARQUITETURA.md).
+
+## Tecnologias
+
+- React 19, TypeScript e Vite 6.
+- Tailwind CSS 4, Motion e Lucide React.
+- Express 4, JSON Web Token e bcrypt.
+- IndexedDB no navegador.
+- Upstash Redis para persistência do servidor.
+- Resend para códigos de recuperação.
+- n8n e Gemini para o Coach.
+- Vercel para frontend e API serverless.
+- GitHub Actions para validação e disponibilidade.
 
 ## Desenvolvimento local
 
-Pré-requisitos: Node.js 20 ou superior.
+### Requisitos
+
+- Node.js 20 ou superior.
+- npm.
+- Navegador moderno com microfone.
+
+### Instalação
 
 ```bash
 git clone https://github.com/JonathassBarbosa/Speek-It-2.git
@@ -37,76 +96,69 @@ cp .env.example .env.local
 npm run dev
 ```
 
-O aplicativo local fica disponível em `http://localhost:3000`.
+Abra `http://localhost:3000`.
+
+Sem Redis, os dados do servidor são gravados na pasta `data/` apenas durante o desenvolvimento. Em produção, o Redis é obrigatório.
+
+## Comandos
+
+| Comando | Finalidade |
+|---|---|
+| `npm run dev` | Inicia frontend e API localmente |
+| `npm run lint` | Valida TypeScript |
+| `npm run test` | Executa testes automatizados |
+| `npm run build` | Gera o pacote de produção |
+| `npm run check` | Executa tipos, testes e build |
+| `npm start` | Executa o servidor compilado |
 
 ## Variáveis de ambiente
 
-| Variável | Ambiente | Finalidade |
-|---|---|---|
-| `VITE_COACH_API_URL` | build/frontend | Webhook HTTPS de produção do Coach no n8n |
-| `JWT_SECRET` | servidor | Assinatura dos tokens de autenticação |
-| `ADMIN_EMAIL` | servidor | E-mail do administrador inicial |
-| `ADMIN_PASSWORD` | servidor | Senha forte do administrador inicial |
-| `UPSTASH_REDIS_REST_URL` | servidor | Endpoint REST do Redis |
-| `UPSTASH_REDIS_REST_TOKEN` | servidor | Credencial REST do Redis |
-| `RESEND_API_KEY` | servidor | Envio dos códigos de recuperação de senha |
-| `EMAIL_FROM` | servidor | Remetente verificado, como `Speek It <recuperacao@dominio.com>` |
+| Variável | Uso | Obrigatória em produção | Sigilo |
+|---|---|---:|---|
+| `VITE_COACH_API_URL` | Webhook de produção do Coach | Sim, para o Coach | Pública no bundle |
+| `VITE_N8N_API_URL` | Compatibilidade com fluxo unificado antigo | Não | Pública no bundle |
+| `JWT_SECRET` | Assinatura das sessões | Sim | Secreta |
+| `ADMIN_EMAIL` | Conta administrativa inicial | Sim | Sensível |
+| `ADMIN_PASSWORD` | Senha administrativa inicial | Sim | Secreta |
+| `UPSTASH_REDIS_REST_URL` | Endpoint REST do Redis | Sim | Sensível |
+| `UPSTASH_REDIS_REST_TOKEN` | Token do Redis | Sim | Secreta |
+| `UPSTASH_KV_REST_API_URL` | Nome alternativo criado pela integração | Alternativa | Sensível |
+| `UPSTASH_KV_REST_API_TOKEN` | Token alternativo da integração | Alternativa | Secreta |
+| `RESEND_API_KEY` | Envio de e-mails | Sim, para recuperação | Secreta |
+| `EMAIL_FROM` | Remetente verificado | Sim, para recuperação | Configuração |
 
-As variáveis que começam com `VITE_` ficam visíveis no código do navegador. Nunca armazene chaves privadas nelas. A chave do Gemini deve permanecer protegida dentro das credenciais do n8n.
+Use [.env.example](.env.example) como modelo. Nunca faça commit de `.env`, `.env.local`, tokens, senhas ou chaves privadas.
 
-### Recuperação de senha
+## Dados e persistência
 
-O fluxo de recuperação envia um código numérico de seis dígitos para o e-mail cadastrado. O código expira em 10 minutos, permite no máximo cinco tentativas e só pode ser solicitado novamente após 60 segundos.
+- **IndexedDB:** roteiros, avaliações completas e arquivos de áudio ficam no navegador do usuário.
+- **Redis:** usuários, hashes de senha, métricas resumidas, backups, erros e códigos temporários ficam no servidor.
+- **Senha:** armazenada somente como hash bcrypt.
+- **Códigos:** armazenados como hash, expiram em dez minutos e são de uso único.
+- **Áudio:** não é enviado ao backend do Speek It; no Coach, é enviado diretamente ao webhook quando solicitado pelo usuário.
 
-O envio utiliza a API da Resend. Cadastre `RESEND_API_KEY` e um remetente verificado em `EMAIL_FROM` nas variáveis da Vercel. O endpoint de saúde informa `services.email: configured` quando o envio está pronto.
+## Publicação
 
-## Validação
+O `vercel.json` direciona `/api/*` para `api/index.ts` e serve o restante como SPA. Cada atualização integrada à branch `main` inicia um deploy de produção.
 
-```bash
-npm run lint
-npm run test
-npm run build
-npm audit --omit=dev
-```
+Checklist resumido:
 
-O comando `npm run check` executa tipos, testes e compilação em sequência. A automação `.github/workflows/ci.yml` repete essas validações em cada PR e atualização da `main`.
+1. Executar `npm run check`.
+2. Abrir PR contra `main`.
+3. Confirmar GitHub Actions e Vercel Preview.
+4. Integrar a PR.
+5. Aguardar Vercel `Ready`.
+6. Testar `/api/monitoring/health`.
+7. Entrar como administrador e executar a Central de Diagnóstico.
 
-## Publicação na Vercel
+Consulte [Operação e deploy](docs/OPERACAO-E-DEPLOY.md) para o procedimento completo.
 
-1. Importe o repositório na Vercel.
-2. Cadastre todas as variáveis de servidor e `VITE_COACH_API_URL`.
-3. Conecte um Redis compatível com REST.
-4. Publique a branch `main`.
-5. Confirme `GET /api/monitoring/health`.
-6. Quando o lançamento for público, ajuste a proteção de acesso da Vercel conscientemente.
+## Segurança
 
-O arquivo `vercel.json` encaminha `/api/*` para a função Express e as demais rotas para o aplicativo.
+Este repositório é público. Credenciais reais devem existir somente nos cofres da Vercel, n8n, Resend e Upstash. O [Inventário operacional](docs/INVENTARIO-OPERACIONAL.md) registra onde encontrá-las sem publicar seus valores.
 
-## Monitoramento
-
-- `GET /api/monitoring/health` verifica API e persistência.
-- Erros críticos de renderização autenticada são enviados para o backend.
-- Administradores podem consultar `GET /api/monitoring/errors`.
-- A automação `.github/workflows/availability.yml` consulta a produção a cada 30 minutos.
-- Falhas aparecem na aba **Actions** do GitHub e podem usar as notificações nativas do repositório.
-
-## Backup e restauração
-
-O painel administrativo permite criar snapshots de usuários e avaliações. São mantidos os 14 backups mais recentes no Redis.
-
-Antes de uma restauração, o sistema cria automaticamente um snapshot do estado atual. A restauração exige uma sessão de administrador.
-
-Recomendações operacionais:
-
-- crie um backup antes de mudanças relevantes;
-- valide periodicamente se os snapshots aparecem no painel;
-- mantenha também o backup gerenciado oferecido pelo provedor do Redis;
-- restrinja o acesso às credenciais da Vercel, Redis e n8n.
-
-## Privacidade dos arquivos
-
-As gravações de treino e os vídeos permanecem no navegador do usuário. O Coach envia ao n8n somente o texto ou áudio que o usuário decidir enviar naquela conversa. As métricas resumidas das avaliações são sincronizadas com o servidor.
+Se uma credencial for exposta, remova-a do serviço, gere outra, atualize o cofre correspondente e faça novo deploy. Apagar apenas o texto do Git não invalida uma chave já copiada.
 
 ## Licença
 
-Apache-2.0.
+O código contém cabeçalhos SPDX `Apache-2.0`. Confirme a política comercial e os direitos sobre ativos visuais antes de redistribuir o produto ou aceitar contribuições externas.
