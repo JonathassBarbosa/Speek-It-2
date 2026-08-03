@@ -120,7 +120,7 @@ export default function TeleprompterMonitor({
           {/* Teleprompter Text Display Container */}
           <div
             ref={teleprompterContainerRef}
-            className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 md:px-12 xl:px-16 py-14 sm:py-20 md:py-28 space-y-6 scroll-smooth select-none relative"
+            className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 md:px-12 xl:px-16 py-14 sm:py-20 md:py-28 space-y-6 select-none relative"
             style={{
               scrollbarWidth: 'none',
               maskImage: 'linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)',
