@@ -5,6 +5,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+export function calculateNextScrollPosition(
+  currentPosition: number,
+  maximumPosition: number,
+  elapsedMs: number,
+  speedPixelsPerSecond: number,
+) {
+  if (maximumPosition <= 0) return currentPosition;
+  const safeElapsed = Math.min(Math.max(elapsedMs, 0), 100);
+  const nextPosition = currentPosition + (speedPixelsPerSecond * safeElapsed) / 1000;
+  return Math.min(maximumPosition, nextPosition);
+}
+
 // Owns teleprompter scroll/timer state and the auto-scroll animation loop.
 export function useTeleprompter() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -57,22 +69,25 @@ export function useTeleprompter() {
       const elapsed = timestamp - lastScrollTimeRef.current;
       lastScrollTimeRef.current = timestamp;
 
-      // scrollSpeed determines pixels scrolled per second
-      // speed range: 10 to 100
-      const pixelsPerSec = scrollSpeed;
-      const step = (pixelsPerSec * elapsed) / 1000;
-
-      scrollContainer.scrollTop += step;
-
-      // Update progress bar
       const maxScroll = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-      if (maxScroll > 0) {
-        const percentage = Math.min(100, Math.round((scrollContainer.scrollTop / maxScroll) * 100));
-        setScrollProgress(percentage);
+
+      // During the first layout frame the browser may still report no overflow.
+      // Keep the loop alive until the teleprompter has its final dimensions.
+      if (maxScroll <= 1) {
+        autoScrollRequestRef.current = requestAnimationFrame(scrollLoop);
+        return;
       }
 
-      // If we reached the end of the script, stop auto-scrolling automatically
-      if (scrollContainer.scrollTop >= maxScroll) {
+      const nextPosition = calculateNextScrollPosition(
+        scrollContainer.scrollTop,
+        maxScroll,
+        elapsed,
+        scrollSpeed,
+      );
+      scrollContainer.scrollTop = nextPosition;
+      setScrollProgress(Math.min(100, Math.round((nextPosition / maxScroll) * 100)));
+
+      if (nextPosition >= maxScroll - 0.5) {
         setIsPlaying(false);
       } else {
         autoScrollRequestRef.current = requestAnimationFrame(scrollLoop);
@@ -85,7 +100,9 @@ export function useTeleprompter() {
     return () => {
       if (autoScrollRequestRef.current) {
         cancelAnimationFrame(autoScrollRequestRef.current);
+        autoScrollRequestRef.current = null;
       }
+      lastScrollTimeRef.current = null;
     };
   }, [isPlaying, scrollSpeed]);
 
