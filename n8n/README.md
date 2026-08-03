@@ -1,21 +1,22 @@
-# Workflow n8n do Speek-It
+# Workflows n8n do Speek It
 
-Arquivo para importação:
+## Arquivos
 
-- `speek-it-unified-vocal-coach.json`
-- `speek-it-coach-local.json` — versão recomendada sem cobrança por chamada
+- `speek-it-coach-local.json`: fluxo atual e recomendado, usando Gemini e voz do aparelho.
+- `speek-it-unified-vocal-coach.json`: fluxo anterior com nós OpenAI para avaliação, chat e TTS.
 
-## Coach no nível gratuito
+## Fluxo atual
 
-O arquivo `speek-it-coach-local.json` usa:
+O Coach local:
 
-- Gemini Flash no nível gratuito;
-- gravação capturada pelo navegador e analisada pelo Gemini;
-- voz em português do Brasil fornecida pelo aparelho do usuário;
-- credencial protegida pelo cofre do n8n;
-- nenhuma cobrança por chamada dentro dos limites gratuitos.
+- recebe texto ou áudio em `multipart/form-data`;
+- envia o conteúdo ao Gemini;
+- força respostas em português do Brasil;
+- devolve texto estruturado;
+- usa a voz PT-BR disponível no aparelho do usuário;
+- mantém a credencial do modelo protegida no cofre do n8n.
 
-A URL de produção termina em:
+Production URL esperada:
 
 ```text
 /webhook/speek-it-coach-local
@@ -23,42 +24,43 @@ A URL de produção termina em:
 
 ## Importar
 
-1. Abra o n8n.
-2. Selecione **Workflows → Import from File**.
-3. Escolha o arquivo JSON desta pasta.
-4. Abra os cinco nós cujo nome começa com `OpenAI`.
-5. Selecione a mesma credencial OpenAI em cada um deles.
+1. Abra **Workflows → Import from File** no n8n.
+2. Importe `speek-it-coach-local.json`.
+3. Abra **Gerar Resposta Gemini**.
+4. Selecione ou recrie a credencial HTTP que envia a chave do Gemini.
+5. Confirme modelo, prompt PT-BR e resposta do webhook.
 6. Salve e publique/ative o workflow.
-7. Abra `Webhook API Entry` e copie a **Production URL**.
+7. Copie a **Production URL** do nó Webhook.
+8. Cadastre-a como `VITE_COACH_API_URL` na Vercel e faça novo deploy.
 
-Não use a URL com `/webhook-test/`. A URL correta termina em:
+O JSON exportado pode aparecer com `active: false`; a ativação é feita na instância após a importação.
 
-```text
-/webhook/speek-it-api
+Não use `/webhook-test/`, pois ele só funciona durante o teste manual do editor.
+
+## Contrato do Coach atual
+
+Requisição:
+
+- `action`: `chat`.
+- `sessionId`: identificador da sessão.
+- `text`: texto opcional.
+- `audio`: gravação opcional.
+
+Resposta:
+
+```json
+{
+  "textResponse": "Orientação: ...\n\nPrática: ...",
+  "audioBase64": null,
+  "voiceProvider": "device",
+  "timestamp": "ISO-8601"
+}
 ```
 
-## Contrato da API
+## Fluxo anterior
 
-### Avaliação
+O workflow unificado usa `/webhook/speek-it-api` e requer configuração dos nós OpenAI. Ele não é o endpoint atual do frontend. Só o publique se houver decisão explícita de voltar à arquitetura com OpenAI/TTS externo.
 
-`multipart/form-data`:
+## Manual completo
 
-- `action`: `evaluate`
-- `promptText`: texto alvo em inglês
-- `audio`: gravação do aluno
-
-### Chat por texto
-
-`multipart/form-data`:
-
-- `action`: `chat`
-- `sessionId`: identificador da sessão
-- `text`: mensagem
-
-### Chat por áudio
-
-`multipart/form-data`:
-
-- `action`: `chat`
-- `sessionId`: identificador da sessão
-- `audio`: gravação do aluno
+Consulte [`docs/COACH-IA-E-N8N.md`](../docs/COACH-IA-E-N8N.md).
